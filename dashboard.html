@@ -12,836 +12,1214 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/assets/favicon.ico">
 <style>
-:root{
-  --bg:#000;--surface:#080808;--card:#0d0d0d;--border:#1a1a1a;
-  --text:#fff;--muted:#666;--muted2:#333;
-  --primary:#4f46e5;--primary2:#4338ca;
-  --green:#22c55e;--greenL:#4ade80;
-  --red:#ef4444;--amber:#d97706;
-  --r:12px;--nav-h:54px;
+/* ── TOKENS ─────────────────────────────────────────────────────────────────*/
+:root {
+  --bg:      #000;
+  --surface: #0a0a0a;
+  --card:    #111;
+  --border:  #1e1e1e;
+  --text:    #f5f5f7;
+  --muted:   #636366;
+  --muted2:  #3a3a3c;
+  --primary: #4f46e5;
+  --bubble-out: #4f46e5;    /* user bubble colour */
+  --bubble-in:  #1c1c1e;    /* AI bubble colour */
+  --green:   #30d158;
+  --red:     #ff453a;
+  --amber:   #ffd60a;
+  --nav-h:   52px;
+  --input-h: 64px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;}
 
-/* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:50;height:var(--nav-h);padding:0 10px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-bottom:1px solid var(--border);}
-.nav-left{display:flex;align-items:center;gap:7px;min-width:0;}
-.nav-logo{display:flex;align-items:center;gap:7px;font-weight:700;font-size:.9rem;text-decoration:none;color:var(--text);white-space:nowrap;}
-.nav-logo img{height:22px;width:22px;border-radius:5px;object-fit:cover;flex-shrink:0;}
-.model-badge{background:rgba(79,70,229,.15);border:1px solid rgba(79,70,229,.3);border-radius:6px;padding:.16rem .55rem;font-size:.68rem;color:#818cf8;white-space:nowrap;flex-shrink:0;}
-.nav-right{display:flex;align-items:center;gap:5px;flex-shrink:0;}
-.nav-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.28rem .6rem;border-radius:7px;font-size:.72rem;cursor:pointer;font-family:inherit;transition:.2s;white-space:nowrap;}
-.nav-btn:hover{color:var(--text);}
-.nav-btn.danger{color:var(--red);border-color:rgba(239,68,68,.2);}
-.ham-btn{display:none;background:none;border:none;color:var(--text);font-size:1.2rem;cursor:pointer;padding:.25rem;flex-shrink:0;}
+/* ── NAV ────────────────────────────────────────────────────────────────────*/
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  height: var(--nav-h);
+  background: rgba(0,0,0,.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: .5px solid var(--border);
+  display: flex; align-items: center; padding: 0 12px;
+  gap: 8px;
+}
+.ham { background:none;border:none;color:var(--text);font-size:1.2rem;cursor:pointer;padding:.25rem;flex-shrink:0;display:none; }
+.topbar-logo { display:flex;align-items:center;gap:7px;font-weight:700;font-size:.95rem;text-decoration:none;color:var(--text);flex-shrink:0; }
+.topbar-logo img { height:24px;width:24px;border-radius:6px;object-fit:cover; }
+.topbar-spacer { flex:1; }
+.wake-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(79,70,229,.12); border: 1px solid rgba(79,70,229,.3);
+  border-radius: 20px; padding: .22rem .75rem;
+  font-size: .72rem; color: #818cf8; cursor: pointer;
+  transition: .2s; white-space: nowrap;
+}
+.wake-pill.active { background:rgba(48,209,88,.12); border-color:rgba(48,209,88,.3); color:#30d158; }
+.wake-pill.listening { background:rgba(255,214,10,.12); border-color:rgba(255,214,10,.3); color:var(--amber); animation: wakePulse 1.2s infinite; }
+.wake-dot { width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0; }
+@keyframes wakePulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.topbar-btn { background:none;border:1px solid var(--border);color:var(--muted);padding:.26rem .6rem;border-radius:7px;font-size:.72rem;cursor:pointer;font-family:inherit;white-space:nowrap; }
+.topbar-btn.danger { color:var(--red);border-color:rgba(255,69,58,.2); }
 
-/* LAYOUT */
-.app-body{position:fixed;top:var(--nav-h);left:0;right:0;bottom:0;display:flex;overflow:hidden;}
+/* ── LAYOUT ─────────────────────────────────────────────────────────────────*/
+.layout { position:fixed;top:var(--nav-h);left:0;right:0;bottom:0;display:flex; }
 
-/* SIDEBAR */
-.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:transform .3s cubic-bezier(.4,0,.2,1);}
-.sidebar-head{padding:11px;}
-.sidebar-head h3{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;font-weight:600;}
-.new-chat-btn{display:flex;align-items:center;gap:7px;padding:.52rem .82rem;background:rgba(79,70,229,.12);border:1px solid rgba(79,70,229,.25);border-radius:8px;color:#818cf8;font-size:.82rem;font-weight:600;cursor:pointer;width:100%;margin-top:8px;font-family:inherit;transition:.2s;}
-.new-chat-btn:hover{background:rgba(79,70,229,.2);}
-.history-list{flex:1;overflow-y:auto;padding:5px;}
-.h-item{padding:.52rem .72rem;border-radius:8px;cursor:pointer;font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.15s;margin-bottom:2px;}
-.h-item:hover{background:rgba(255,255,255,.04);color:var(--text);}
-.sidebar-foot{padding:9px;border-top:1px solid var(--border);}
-.user-info{display:flex;align-items:center;gap:7px;}
-.user-av{width:28px;height:28px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0;}
-.user-name{font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.user-email{font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;backdrop-filter:blur(2px);}
-.sidebar-overlay.show{display:block;}
+/* ── SIDEBAR ────────────────────────────────────────────────────────────────*/
+.sidebar {
+  width: 240px; background: var(--surface); border-right: .5px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0;
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+}
+.sb-head { padding: 12px 12px 8px; }
+.sb-title { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 600; margin-bottom: 8px; }
+.sb-new { display:flex;align-items:center;gap:7px;padding:.5rem .82rem;background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.22);border-radius:8px;color:#818cf8;font-size:.82rem;font-weight:600;cursor:pointer;width:100%;font-family:inherit;transition:.2s; }
+.sb-new:hover { background:rgba(79,70,229,.18); }
+.sb-list { flex:1;overflow-y:auto;padding:4px 6px; }
+.sb-list::-webkit-scrollbar{width:2px;}
+.sb-list::-webkit-scrollbar-thumb{background:var(--border);}
+.sb-item { padding:.5rem .72rem;border-radius:8px;cursor:pointer;font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.15s;margin-bottom:1px; }
+.sb-item:hover { background:rgba(255,255,255,.05);color:var(--text); }
+.sb-foot { padding: 10px; border-top: .5px solid var(--border); }
+.sb-user { display:flex;align-items:center;gap:8px; }
+.sb-av { width:30px;height:30px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0; }
+.sb-name { font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.sb-email { font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.sb-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;backdrop-filter:blur(2px); }
+.sb-overlay.show { display:block; }
 
-/* MAIN */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
-.messages{flex:1;overflow-y:auto;padding:12px 10px 4px;display:flex;flex-direction:column;gap:11px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
-.messages::-webkit-scrollbar{width:3px;}
-.messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+/* ── MAIN ───────────────────────────────────────────────────────────────────*/
+.main { flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0; }
 
-/* WELCOME */
-.welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 14px;text-align:center;}
-.welcome img{width:52px;height:52px;border-radius:13px;margin-bottom:14px;}
-.welcome h2{font-size:1.2rem;font-weight:700;margin-bottom:6px;}
-.welcome p{color:var(--muted);font-size:.83rem;max-width:290px;margin-bottom:16px;line-height:1.6;}
-.wake-hint{background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.22);border-radius:10px;padding:11px 14px;font-size:.79rem;color:#a5b4fc;margin-bottom:16px;max-width:310px;line-height:1.8;text-align:left;}
-.wake-hint strong{color:#c4b5fd;}
-.qa-wrap{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:340px;}
-.qa-btn{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:.44rem .82rem;font-size:.76rem;color:var(--muted);cursor:pointer;font-family:inherit;transition:.2s;}
-.qa-btn:hover{color:var(--text);border-color:rgba(255,255,255,.15);}
+/* ── MESSAGES — iMessage style ──────────────────────────────────────────────*/
+.messages {
+  flex: 1; overflow-y: auto; padding: 16px 12px 8px;
+  display: flex; flex-direction: column; gap: 4px;
+  overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.messages::-webkit-scrollbar{width:0;}
 
-/* MESSAGES */
-.msg{display:flex;gap:7px;align-items:flex-start;animation:msgIn .22s ease;}
-@keyframes msgIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
-.msg.user{flex-direction:row-reverse;}
-.msg-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;}
-.msg-av.ai{background:linear-gradient(135deg,#4f46e5,#7c3aed);}
-.msg-av.user{background:#1a1a1a;border:1px solid var(--border);}
-.msg-bubble{max-width:80%;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:9px 12px;font-size:.875rem;line-height:1.65;word-break:break-word;}
-.msg.user .msg-bubble{background:rgba(79,70,229,.15);border-color:rgba(79,70,229,.3);}
-.msg-time{font-size:.6rem;color:var(--muted);margin-top:3px;padding:0 2px;}
-.msg.user .msg-time{text-align:right;}
-.typing-bubble{display:flex;gap:5px;align-items:center;padding:9px 14px;background:var(--card);border:1px solid var(--border);border-radius:14px;width:fit-content;}
-.typing-bubble span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:typingB 1.2s infinite;}
+/* Date separator */
+.date-sep {
+  text-align: center; font-size: .68rem; color: var(--muted);
+  margin: 10px 0 4px; font-weight: 500; letter-spacing: .4px;
+}
+
+/* Message row */
+.msg-row { display:flex;flex-direction:column;animation:msgIn .2s ease; }
+@keyframes msgIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.msg-row.out { align-items: flex-end; }
+.msg-row.in  { align-items: flex-start; }
+
+/* Consecutive message grouping */
+.msg-row.out + .msg-row.out { margin-top: 2px; }
+.msg-row.in  + .msg-row.in  { margin-top: 2px; }
+.msg-row.out + .msg-row.in,
+.msg-row.in  + .msg-row.out { margin-top: 10px; }
+
+/* Bubble */
+.bubble {
+  max-width: 78%;
+  padding: 9px 13px;
+  font-size: .92rem; line-height: 1.55;
+  word-break: break-word;
+  position: relative;
+}
+/* Outgoing (user) */
+.msg-row.out .bubble {
+  background: var(--bubble-out);
+  color: #fff;
+  border-radius: 18px 18px 4px 18px;
+}
+/* Incoming (AI) */
+.msg-row.in .bubble {
+  background: var(--bubble-in);
+  color: var(--text);
+  border-radius: 18px 18px 18px 4px;
+  border: .5px solid var(--border);
+}
+/* Tail shapes for first/last in group */
+.msg-row.out:last-of-type .bubble,
+.msg-row.out:not(:has(+ .msg-row.out)) .bubble {
+  border-radius: 18px 18px 4px 18px;
+}
+.msg-row.in:not(:has(+ .msg-row.in)) .bubble {
+  border-radius: 18px 18px 18px 4px;
+}
+
+/* Timestamp */
+.msg-time {
+  font-size: .6rem; color: var(--muted);
+  margin: 2px 4px 0;
+  display: flex; align-items: center; gap: 3px;
+}
+.msg-row.out .msg-time { justify-content: flex-end; }
+.read-tick { color: #60a5fa; font-size: .65rem; }
+
+/* Typing indicator */
+.typing-row { display:flex;align-items:flex-start;gap:8px;animation:msgIn .2s ease; }
+.typing-av { width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0; }
+.typing-bubble { background:var(--bubble-in);border:.5px solid var(--border);border-radius:18px 18px 18px 4px;padding:11px 14px;display:flex;gap:4px;align-items:center; }
+.typing-bubble span { width:6px;height:6px;background:var(--muted);border-radius:50%;animation:tB 1.2s infinite; }
 .typing-bubble span:nth-child(2){animation-delay:.2s;}
 .typing-bubble span:nth-child(3){animation-delay:.4s;}
-@keyframes typingB{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-5px);}}
+@keyframes tB{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-5px);}}
 
-/* INPUT */
-.input-area{padding:7px 9px 9px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
-.input-row{display:flex;gap:5px;align-items:flex-end;background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:6px 9px;transition:.2s;}
-.input-row:focus-within{border-color:rgba(79,70,229,.5);}
-#msgInput{flex:1;background:none;border:none;color:var(--text);font-family:inherit;font-size:.88rem;resize:none;outline:none;max-height:88px;min-height:20px;line-height:1.5;padding:0;}
-#msgInput::placeholder{color:var(--muted);}
-.voice-btn{background:none;border:none;cursor:pointer;padding:.26rem;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:.2s;flex-shrink:0;min-width:30px;min-height:30px;font-size:1.1rem;color:var(--muted);}
-.voice-btn.idle{color:var(--muted);}
-.voice-btn.wake-listening{color:var(--amber);animation:pulse 2s infinite;}
-.voice-btn.cmd-listening{color:var(--greenL);animation:pulse .8s infinite;}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.15);}}
-.send-btn{background:var(--primary);color:#fff;border:none;width:30px;height:30px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;flex-shrink:0;}
-.send-btn:hover{background:var(--primary2);}
-.send-btn:disabled{opacity:.35;cursor:not-allowed;}
-.input-footer{display:flex;align-items:center;justify-content:space-between;margin-top:4px;padding:0 2px;}
-.input-hint{font-size:.66rem;color:var(--muted2);}
-.input-hint a{color:var(--muted2);text-decoration:none;}
-.voice-status{font-size:.67rem;padding:.14rem .48rem;border-radius:4px;display:none;transition:.2s;}
-.voice-status.wake{display:inline-block;background:rgba(245,158,11,.1);color:var(--amber);}
-.voice-status.awake{display:inline-block;background:rgba(34,197,94,.12);color:var(--greenL);font-weight:700;animation:statusPulse 1s infinite;}
-.voice-status.cmd{display:inline-block;background:rgba(34,197,94,.12);color:var(--greenL);font-weight:700;animation:statusPulse .8s infinite;}
-@keyframes statusPulse{0%,100%{opacity:1;}50%{opacity:.5;}}
-
-/* WAKE OVERLAY — fullscreen indicator when ByteChief wakes */
-.wake-overlay{
-  position:fixed;inset:0;z-index:600;
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.88);backdrop-filter:blur(12px);
-  animation:wakeIn .3s ease;
+/* ── WELCOME STATE ───────────────────────────────────────────────────────────*/
+.welcome {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px 16px; text-align: center;
 }
-.wake-overlay.show{display:flex;}
-@keyframes wakeIn{from{opacity:0;}to{opacity:1;}}
-.wake-orb{
-  width:120px;height:120px;border-radius:50%;
-  background:linear-gradient(135deg,#4f46e5,#7c3aed);
-  display:flex;align-items:center;justify-content:center;
-  font-size:3rem;margin-bottom:20px;
-  animation:orbPulse 1s ease-in-out infinite;
-  box-shadow:0 0 0 0 rgba(79,70,229,.7);
+.welcome img { width: 56px; height: 56px; border-radius: 15px; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(79,70,229,.3); }
+.welcome h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 5px; }
+.welcome p { color: var(--muted); font-size: .83rem; max-width: 280px; margin-bottom: 18px; line-height: 1.6; }
+.wake-card {
+  background: rgba(79,70,229,.08); border: 1px solid rgba(79,70,229,.2);
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 18px;
+  max-width: 320px; text-align: left;
+}
+.wake-card-title { font-size: .78rem; font-weight: 700; color: #a5b4fc; margin-bottom: 6px; }
+.wake-card-body { font-size: .76rem; color: #818cf8; line-height: 1.85; }
+.wake-card-body strong { color: #c4b5fd; }
+.qs { display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:340px; }
+.q { background:var(--card);border:.5px solid var(--border);border-radius:20px;padding:.42rem .88rem;font-size:.76rem;color:var(--muted);cursor:pointer;font-family:inherit;transition:.2s; }
+.q:hover{color:var(--text);border-color:rgba(255,255,255,.2);}
+
+/* ── INPUT BAR ───────────────────────────────────────────────────────────────*/
+.input-bar {
+  flex-shrink: 0;
+  padding: 8px 10px 10px;
+  background: rgba(0,0,0,.92);
+  backdrop-filter: blur(20px);
+  border-top: .5px solid var(--border);
+}
+.input-inner {
+  display: flex; align-items: flex-end; gap: 6px;
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 22px; padding: 6px 8px 6px 14px; transition: .2s;
+}
+.input-inner:focus-within { border-color: rgba(79,70,229,.5); }
+#msgInput {
+  flex: 1; background: none; border: none; color: var(--text);
+  font-family: inherit; font-size: .9rem; resize: none;
+  outline: none; max-height: 100px; min-height: 22px; line-height: 1.5; padding: 0;
+}
+#msgInput::placeholder { color: var(--muted); }
+.mic-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.1rem; width: 32px; height: 32px;
+  border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; transition: .2s;
+  color: var(--muted);
+}
+.mic-btn.wake  { color: #818cf8; }
+.mic-btn.awake { color: var(--green); animation: micPulse .9s infinite; }
+.mic-btn.cmd   { color: var(--amber); animation: micPulse .6s infinite; }
+@keyframes micPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+.send-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--primary); color: #fff; border: none;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; transition: .2s;
+}
+.send-btn:disabled { opacity: .35; cursor: not-allowed; }
+.send-btn:not(:disabled):hover { background: #4338ca; transform: scale(1.05); }
+.input-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 4px; padding: 0 2px;
+}
+.input-hint { font-size: .64rem; color: #3a3a3c; }
+.input-hint a { color: #3a3a3c; text-decoration: none; }
+.voice-label { font-size: .66rem; padding: .12rem .45rem; border-radius: 4px; display: none; }
+.voice-label.show { display: inline-block; }
+.voice-label.wake  { background:rgba(129,140,248,.1);color:#818cf8; }
+.voice-label.awake { background:rgba(48,209,88,.1);color:var(--green);font-weight:700; }
+.voice-label.cmd   { background:rgba(255,214,10,.1);color:var(--amber);font-weight:700; }
+
+/* ── WAKE OVERLAY ────────────────────────────────────────────────────────────*/
+.wake-overlay {
+  position: fixed; inset: 0; z-index: 600;
+  background: rgba(0,0,0,.92); backdrop-filter: blur(20px);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px;
+}
+.wake-overlay.show { display: flex; animation: fadeIn .25s ease; }
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.orb {
+  width: 110px; height: 110px; border-radius: 50%;
+  background: conic-gradient(from 0deg, #4f46e5, #7c3aed, #4f46e5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.8rem; margin-bottom: 22px;
+  box-shadow: 0 0 0 0 rgba(79,70,229,.6);
+  animation: orbPulse 1.4s ease-in-out infinite;
 }
 @keyframes orbPulse{
-  0%{box-shadow:0 0 0 0 rgba(79,70,229,.7);transform:scale(1);}
-  50%{box-shadow:0 0 0 20px rgba(79,70,229,0);transform:scale(1.06);}
+  0%{box-shadow:0 0 0 0 rgba(79,70,229,.6);transform:scale(1);}
+  50%{box-shadow:0 0 0 22px rgba(79,70,229,0);transform:scale(1.05);}
   100%{box-shadow:0 0 0 0 rgba(79,70,229,0);transform:scale(1);}
 }
-.wake-text{font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:8px;}
-.wake-subtext{font-size:.9rem;color:#a5b4fc;margin-bottom:28px;}
-.wake-transcript{
-  font-size:.88rem;color:var(--greenL);
-  background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);
-  border-radius:8px;padding:8px 18px;min-width:200px;text-align:center;
-  min-height:36px;display:flex;align-items:center;justify-content:center;
+.wake-name { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; }
+.wake-resp { font-size: 1rem; color: #a5b4fc; margin-bottom: 24px; text-align: center; max-width: 280px; line-height: 1.5; }
+.wake-live {
+  background: rgba(48,209,88,.1); border: 1px solid rgba(48,209,88,.25);
+  border-radius: 12px; padding: 10px 20px; font-size: .88rem;
+  color: var(--green); min-width: 220px; text-align: center; min-height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  transition: .2s; font-weight: 500;
 }
-.wake-cancel{
-  margin-top:18px;background:none;border:1px solid var(--border);
-  color:var(--muted);padding:.55rem 1.4rem;border-radius:10px;
-  font-family:inherit;font-size:.85rem;cursor:pointer;transition:.2s;
+.wake-cancel {
+  margin-top: 20px; background: none; border: 1px solid var(--border);
+  color: var(--muted); padding: .55rem 1.6rem; border-radius: 10px;
+  font-family: inherit; font-size: .85rem; cursor: pointer;
 }
-.wake-cancel:hover{color:var(--text);}
 
-/* PERMISSION MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(12px);}
-.modal-overlay.show{display:flex;}
-.modal-card{background:var(--surface);border:1px solid rgba(79,70,229,.3);border-radius:20px;padding:28px 22px;text-align:center;max-width:340px;width:100%;animation:slideUp .35s cubic-bezier(.34,1.56,.64,1);}
-@keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-.modal-icon{font-size:2.8rem;margin-bottom:12px;}
-.modal-card h3{font-size:1.1rem;font-weight:700;margin-bottom:7px;}
-.modal-card p{color:var(--muted);font-size:.83rem;line-height:1.65;margin-bottom:14px;}
-.perm-list{background:rgba(79,70,229,.07);border:1px solid rgba(79,70,229,.18);border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:left;font-size:.8rem;color:#a5b4fc;line-height:2;}
-.perm-list span{display:block;}
-.modal-btns{display:flex;gap:8px;}
-.btn-allow{flex:1;padding:.72rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;transition:.2s;}
-.btn-allow:hover{opacity:.9;}
-.btn-deny{padding:.72rem 1.1rem;background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:10px;font-family:inherit;font-size:.85rem;cursor:pointer;}
+/* ── PERMISSION MODAL ────────────────────────────────────────────────────────*/
+.modal-bg { position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:300;display:none;align-items:flex-end;justify-content:center;padding:0;backdrop-filter:blur(12px); }
+.modal-bg.show { display:flex; }
+.modal-sheet {
+  background: #1c1c1e; border-radius: 24px 24px 0 0;
+  padding: 28px 22px 36px; width: 100%; max-width: 480px;
+  animation: sheetUp .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.sheet-handle { width: 36px; height: 4px; background: #48484a; border-radius: 2px; margin: 0 auto 20px; }
+.sheet-icon { font-size: 2.6rem; text-align: center; margin-bottom: 12px; }
+.sheet-title { font-size: 1.1rem; font-weight: 700; text-align: center; margin-bottom: 7px; }
+.sheet-sub { color: var(--muted); font-size: .83rem; text-align: center; line-height: 1.6; margin-bottom: 16px; }
+.perm-rows { background: #2c2c2e; border-radius: 12px; margin-bottom: 18px; overflow: hidden; }
+.perm-row { display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:.5px solid #3a3a3c; }
+.perm-row:last-child { border-bottom: none; }
+.perm-ico { font-size: 1.2rem; width: 28px; flex-shrink: 0; text-align: center; }
+.perm-info h4 { font-size: .85rem; font-weight: 600; margin-bottom: 2px; }
+.perm-info p { font-size: .73rem; color: var(--muted); }
+.perm-check { margin-left: auto; color: var(--green); font-size: 1rem; }
+.btn-allow { width:100%;padding:.85rem;background:var(--primary);color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:8px;transition:.2s; }
+.btn-allow:hover { opacity:.9; }
+.btn-deny { width:100%;padding:.75rem;background:none;border:none;color:var(--muted);font-family:inherit;font-size:.88rem;cursor:pointer; }
 
-/* ACTION OVERLAY */
-.action-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(8px);}
-.action-overlay.show{display:flex;}
-.action-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 20px;text-align:center;max-width:330px;width:100%;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
-.act-icon{font-size:3.2rem;margin-bottom:12px;display:block;animation:bounceIn .4s ease;}
+/* ── ACTION SHEET ────────────────────────────────────────────────────────────*/
+.action-bg { position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px); }
+.action-bg.show { display:flex; }
+.action-sheet {
+  background: #1c1c1e; border-radius: 24px 24px 0 0;
+  padding: 20px 20px 34px; width: 100%; max-width: 480px;
+  animation: sheetUp .28s ease;
+}
+.act-handle { width:32px;height:4px;background:#48484a;border-radius:2px;margin:0 auto 18px; }
+.act-icon { font-size: 2.8rem; text-align: center; margin-bottom: 10px; display: block; animation: bounceIn .35s ease; }
 @keyframes bounceIn{0%{transform:scale(.5);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
-.action-card h3{font-size:1.1rem;font-weight:700;margin-bottom:6px;}
-.action-card p{color:var(--muted);font-size:.84rem;line-height:1.6;margin-bottom:12px;}
-.act-progress{background:var(--border);border-radius:4px;height:3px;margin-bottom:10px;overflow:hidden;}
-.act-bar{height:100%;background:var(--green);width:0;}
-.act-status{font-size:.78rem;color:var(--greenL);margin-bottom:16px;min-height:18px;}
-.act-btns{display:flex;gap:8px;justify-content:center;}
-.ac-btn{padding:.65rem 1.3rem;border-radius:10px;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:.2s;}
-.ac-btn.ok{background:var(--primary);color:#fff;}
-.ac-btn.ok:hover{background:var(--primary2);}
-.ac-btn.cancel{background:var(--card);border:1px solid var(--border);color:var(--muted);}
+.act-title { font-size: 1.1rem; font-weight: 700; text-align: center; margin-bottom: 5px; }
+.act-desc { color: var(--muted); font-size: .84rem; text-align: center; line-height: 1.6; margin-bottom: 14px; }
+.act-progress { background: #2c2c2e; border-radius: 4px; height: 3px; margin-bottom: 8px; overflow: hidden; }
+.act-bar { height: 100%; background: var(--green); width: 0; transition: width 1.8s ease; }
+.act-status { font-size: .78rem; color: var(--green); text-align: center; margin-bottom: 18px; min-height: 18px; }
+.act-btn { width:100%;padding:.82rem;background:var(--primary);color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer; }
 
-/* TOAST */
-.toast-wrap{position:fixed;bottom:82px;right:10px;display:flex;flex-direction:column;gap:6px;z-index:400;max-width:270px;}
-.toast{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 13px;font-size:.78rem;animation:toastIn .25s ease;box-shadow:0 4px 20px rgba(0,0,0,.4);}
-@keyframes toastIn{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:translateX(0);}}
-.toast.ok{border-color:rgba(34,197,94,.3);color:var(--greenL);}
-.toast.err{border-color:rgba(239,68,68,.3);color:#f87171;}
-.toast.info{border-color:rgba(79,70,229,.3);color:#818cf8;}
+/* ── TOAST ───────────────────────────────────────────────────────────────────*/
+.toasts { position:fixed;top:calc(var(--nav-h)+8px);right:10px;display:flex;flex-direction:column;gap:6px;z-index:700;max-width:260px; }
+.toast { background:#2c2c2e;border:.5px solid var(--border);border-radius:10px;padding:8px 13px;font-size:.78rem;animation:tIn .2s ease;box-shadow:0 4px 20px rgba(0,0,0,.5); }
+@keyframes tIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+.toast.ok  { border-color:rgba(48,209,88,.3);color:var(--green); }
+.toast.err { border-color:rgba(255,69,58,.3);color:var(--red); }
+.toast.info{ border-color:rgba(129,140,248,.3);color:#818cf8; }
 
-/* RESPONSIVE */
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────────*/
 @media(max-width:640px){
-  .sidebar{position:fixed;top:var(--nav-h);bottom:0;left:0;z-index:41;transform:translateX(-100%);width:255px;}
+  .sidebar{position:fixed;top:var(--nav-h);bottom:0;left:0;z-index:41;transform:translateX(-100%);width:260px;}
   .sidebar.open{transform:translateX(0);}
-  .ham-btn{display:flex;}
-  .model-badge{display:none;}
-  .msg-bubble{max-width:88%;}
+  .ham{display:flex;}
+  .bubble{max-width:88%;}
 }
-@media(max-width:380px){.nav-logo span{display:none;}}
+@media(max-width:380px){ .topbar-logo span{display:none;} }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-left">
-    <button class="ham-btn" onclick="toggleSidebar()">☰</button>
-    <a href="/" class="nav-logo"><img src="/assets/logo-dark.png" alt=""><span>ByteChief AI</span></a>
-    <span class="model-badge">llama-3.3-70b</span>
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="ham" onclick="toggleSB()">☰</button>
+  <a href="/" class="topbar-logo"><img src="/assets/logo-dark.png" alt=""><span>ByteChief AI</span></a>
+  <div class="topbar-spacer"></div>
+  <div class="wake-pill" id="wakePill" onclick="onMicBtnClick()">
+    <span class="wake-dot"></span>
+    <span id="wakePillText">Say ByteChief</span>
   </div>
-  <div class="nav-right">
-    <button class="nav-btn" onclick="downloadHistory()">⬇ Export</button>
-    <button class="nav-btn danger" onclick="logout()">Logout</button>
-  </div>
-</nav>
+  <button class="topbar-btn" onclick="dlHistory()">⬇</button>
+  <button class="topbar-btn danger" onclick="logout()">Out</button>
+</header>
 
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="sb-overlay" id="sbOverlay" onclick="toggleSB()"></div>
 
-<div class="app-body">
+<div class="layout">
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-head">
-      <h3>Conversations</h3>
-      <button class="new-chat-btn" onclick="newChat()">✦ New Chat</button>
+    <div class="sb-head">
+      <div class="sb-title">Conversations</div>
+      <button class="sb-new" onclick="newChat()">✦ New Chat</button>
     </div>
-    <div class="history-list" id="historyList">
+    <div class="sb-list" id="sbList">
       <div style="padding:10px;color:var(--muted);font-size:.76rem;">No history yet</div>
     </div>
-    <div class="sidebar-foot">
-      <div class="user-info">
-        <div class="user-av" id="userAv">?</div>
-        <div style="min-width:0;">
-          <div class="user-name" id="userName">Loading...</div>
-          <div class="user-email" id="userEmail">-</div>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-av" id="sbAv">?</div>
+        <div style="min-width:0">
+          <div class="sb-name" id="sbName">Loading...</div>
+          <div class="sb-email" id="sbEmail">-</div>
         </div>
       </div>
     </div>
   </aside>
 
-  <!-- MAIN -->
+  <!-- MAIN CHAT -->
   <main class="main">
     <div class="messages" id="messages">
-      <div class="welcome" id="welcomeState">
+      <div class="welcome" id="welcome">
         <img src="/assets/logo-dark.png" alt="ByteChief AI">
-        <h2>ByteChief AI is ready</h2>
-        <p>Your AI assistant. Chat or use voice commands.</p>
-        <div class="wake-hint">
-          🎙️ Just say <strong>"ByteChief"</strong> — I'll wake up and ask what you need.<br><br>
-          Then say your command:<br>
-          <strong>Call Samuel · Open WhatsApp · Set alarm for 7am</strong><br>
-          <strong>Send SMS · Navigate to Lagos · Search Google</strong>
+        <h2>ByteChief AI</h2>
+        <p>Your intelligent assistant. Chat freely or give voice commands.</p>
+        <div class="wake-card">
+          <div class="wake-card-title">🎙️ Voice Wake Word</div>
+          <div class="wake-card-body">
+            Say <strong>"ByteChief"</strong> — I'll respond and wait.<br>
+            Then say your command:<br>
+            <strong>Call Samuel · Open WhatsApp · Set alarm</strong><br>
+            <strong>Send SMS · Navigate to Lagos · Search</strong>
+          </div>
         </div>
-        <div class="qa-wrap">
-          <button class="qa-btn" onclick="manualWake()">🎙️ Wake ByteChief</button>
-          <button class="qa-btn" onclick="quickSend('What can you do?')">🤖 Capabilities</button>
-          <button class="qa-btn" onclick="quickSend('Help me write code')">💻 Code Help</button>
+        <div class="qs">
+          <button class="q" onclick="manualWake()">🎙️ Wake ByteChief</button>
+          <button class="q" onclick="qs('What can you do?')">🤖 Capabilities</button>
+          <button class="q" onclick="qs('Call Samuel')">📞 Call Samuel</button>
+          <button class="q" onclick="qs('Open WhatsApp')">💬 WhatsApp</button>
         </div>
       </div>
     </div>
 
-    <div class="input-area">
-      <div class="input-row">
-        <textarea id="msgInput" placeholder="Ask ByteChief AI anything..." rows="1"
+    <div class="input-bar">
+      <div class="input-inner">
+        <textarea id="msgInput" placeholder="iMessage ByteChief AI..." rows="1"
           onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-        <button class="voice-btn idle" id="voiceBtn" onclick="onVoiceBtnClick()" title="Tap to speak">🎙️</button>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <button class="mic-btn wake" id="micBtn" onclick="onMicBtnClick()">🎙️</button>
+        <button class="send-btn" id="sendBtn" onclick="sendMsg()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
         </button>
       </div>
       <div class="input-footer">
         <span class="input-hint">ByteChief AI · <a href="/terms.html">Terms</a></span>
-        <span class="voice-status wake" id="voiceStatus">🎙️ Say "ByteChief" to wake</span>
+        <span class="voice-label" id="voiceLabel"></span>
       </div>
     </div>
   </main>
 </div>
 
-<!-- WAKE OVERLAY — shown when ByteChief is awake & listening for command -->
+<!-- WAKE OVERLAY -->
 <div class="wake-overlay" id="wakeOverlay">
-  <div class="wake-orb">🤖</div>
-  <div class="wake-text">ByteChief is awake</div>
-  <div class="wake-subtext" id="wakeResponse">Yes — what would you like me to do?</div>
-  <div class="wake-transcript" id="wakeTranscript">Listening for your command...</div>
+  <div class="orb">🤖</div>
+  <div class="wake-name">ByteChief</div>
+  <div class="wake-resp" id="wakeResp">Yes — what would you like me to do?</div>
+  <div class="wake-live" id="wakeLive">Listening for your command...</div>
   <button class="wake-cancel" onclick="cancelWake()">Cancel</button>
 </div>
 
-<!-- PERMISSION MODAL -->
-<div class="modal-overlay" id="permModal">
-  <div class="modal-card">
-    <div class="modal-icon">🎙️</div>
-    <h3>ByteChief needs permissions</h3>
-    <p>To use voice commands and control your phone, ByteChief AI needs access to:</p>
-    <div class="perm-list">
-      <span>🎙️ Microphone — voice input & wake word</span>
-      <span>📞 Phone — make & simulate calls</span>
-      <span>📨 SMS — send text messages</span>
-      <span>💬 Apps — open WhatsApp & others</span>
-      <span>⏰ Alarms & Timers — set reminders</span>
+<!-- PERMISSION SHEET -->
+<div class="modal-bg" id="permBg">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-icon">🎙️</div>
+    <div class="sheet-title">ByteChief needs access</div>
+    <div class="sheet-sub">Allow these permissions so ByteChief can hear you and control your phone.</div>
+    <div class="perm-rows">
+      <div class="perm-row"><span class="perm-ico">🎙️</span><div class="perm-info"><h4>Microphone</h4><p>Voice input & wake word detection</p></div><span class="perm-check">→</span></div>
+      <div class="perm-row"><span class="perm-ico">📞</span><div class="perm-info"><h4>Phone / Calls</h4><p>Make & initiate real phone calls</p></div><span class="perm-check">→</span></div>
+      <div class="perm-row"><span class="perm-ico">📨</span><div class="perm-info"><h4>SMS</h4><p>Send text messages</p></div><span class="perm-check">→</span></div>
+      <div class="perm-row"><span class="perm-ico">💬</span><div class="perm-info"><h4>Apps</h4><p>Open WhatsApp, YouTube & others</p></div><span class="perm-check">→</span></div>
+      <div class="perm-row"><span class="perm-ico">⏰</span><div class="perm-info"><h4>Alarms & Timers</h4><p>Set reminders via your clock app</p></div><span class="perm-check">→</span></div>
     </div>
-    <div class="modal-btns">
-      <button class="btn-allow" onclick="grantPermissions()">✅ Allow All</button>
-      <button class="btn-deny" onclick="denyPermissions()">Not now</button>
-    </div>
+    <button class="btn-allow" onclick="grantPerms()">✅ Allow All Permissions</button>
+    <button class="btn-deny" onclick="denyPerms()">Not now</button>
   </div>
 </div>
 
-<!-- ACTION OVERLAY -->
-<div class="action-overlay" id="actionOverlay">
-  <div class="action-card">
+<!-- ACTION SHEET (bottom sheet style) -->
+<div class="action-bg" id="actionBg">
+  <div class="action-sheet">
+    <div class="act-handle"></div>
     <span class="act-icon" id="actIcon">📞</span>
-    <h3 id="actTitle">Executing</h3>
-    <p id="actDesc">Processing your command...</p>
+    <div class="act-title" id="actTitle">Executing</div>
+    <div class="act-desc" id="actDesc">Processing...</div>
     <div class="act-progress"><div class="act-bar" id="actBar"></div></div>
     <div class="act-status" id="actStatus"></div>
-    <div class="act-btns">
-      <button class="ac-btn ok" onclick="closeAction()">Done ✓</button>
-      <button class="ac-btn cancel" onclick="closeAction()">Dismiss</button>
-    </div>
+    <button class="act-btn" onclick="closeAction()">Done ✓</button>
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast-wrap" id="toasts"></div>
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
 
 <script>
+// ══════════════════════════════════════════════════════════════════════════════
+// SESSION — persistent across PWA restarts
+// ══════════════════════════════════════════════════════════════════════════════
+function getToken() {
+  return sessionStorage.getItem('bc_token') || localStorage.getItem('bc_token') || null;
+}
+function getUser() {
+  try {
+    const s = sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user');
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════════════════════════════
 const BC = {
-  token:      localStorage.getItem('bc_token'),
+  token:      null,
   user:       null,
-  chatHistory: [],
-  isSending:  false,
+  chatHist:   [],
+  sending:    false,
   micGranted: localStorage.getItem('bc_mic') === '1',
-  // voice state machine: 'idle' | 'wake-listening' | 'awake' | 'cmd-listening'
-  voiceState: 'idle',
+  // voice state: idle | wake | awake | cmd
+  vs:         'idle',
   wakeRec:    null,
   cmdRec:     null,
-  silenceTimer: null,
+  silTimer:   null,
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// WAKE WORD PATTERNS (fuzzy match)
-// ══════════════════════════════════════════════════════════════════════════════
-const WAKE_PATTERNS = [
-  'bytechief','byte chief','byte-chief','by chief','bite chief',
-  'bytechef','byte chef','buytchief','bytchi','b chief'
-];
-
-// ══════════════════════════════════════════════════════════════════════════════
-// WAKE RESPONSES — random each time
-// ══════════════════════════════════════════════════════════════════════════════
 const WAKE_RESPONSES = [
   "Yes — what would you like me to do?",
-  "I'm here! What do you need?",
+  "I'm here! What's your command?",
   "ByteChief ready. Go ahead.",
   "Yes? I'm listening.",
-  "Awake! What's your command?",
+  "Awake! What do you need?",
   "Ready. How can I help?",
 ];
 
 // ══════════════════════════════════════════════════════════════════════════════
-// COMMAND ENGINE
+// ANDROID PWA COMMAND ENGINE
+// Deep links that ACTUALLY work in Android Chrome PWA
 // ══════════════════════════════════════════════════════════════════════════════
-const COMMANDS = [
-  // Call
-  { match: /^(call|phone|ring|dial)\s+(.+)/i, icon:'📞', color:'#22c55e',
-    handle(m){ const t=m[2].trim(); return { title:`Calling ${t}`, desc:`Dialling <strong>${esc(t)}</strong>`, status:'Opening phone dialler...', exec(){ window.location.href=`tel:${encodeURIComponent(t)}`; } }; }
-  },
-  // WhatsApp message
-  { match: /^(send\s+)?(whatsapp|wa)\s+(message\s+|msg\s+)?to\s+([^\s:,]+)[,:\s]\s*(.+)/i, icon:'💬', color:'#25D366',
-    handle(m){ const to=m[4].trim(), msg=m[5].trim();
-      return { title:`WhatsApp → ${to}`, desc:`Sending "<em>${esc(msg)}</em>" to <strong>${esc(to)}</strong>`, status:'Opening WhatsApp...',
-        exec(){ const ph=/^\+?\d[\d\s\-()]+$/.test(to)?to.replace(/\D/g,''):null;
-          if(ph){ window.location.href=`whatsapp://send?phone=${ph}&text=${encodeURIComponent(msg)}`; setTimeout(()=>window.open(`https://wa.me/${ph}?text=${encodeURIComponent(msg)}`,'_blank'),1500); }
-          else{ setTimeout(()=>window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank'),600); }
-        }};
+const CMDS = [
+  // ── Phone Call ──────────────────────────────────────────────────────────────
+  { re: /^(call|phone|ring|dial)\s+(.+)/i, icon:'📞',
+    run(m) {
+      const who = m[2].trim();
+      return {
+        title: `Calling ${who}`,
+        desc:  `Dialling <strong>${esc(who)}</strong>`,
+        status: 'Opening Phone...',
+        go() {
+          // tel: is the only reliable way — opens dialler with search/number
+          // Works perfectly in Android PWA
+          setTimeout(() => { window.location.href = `tel:${encodeURIComponent(who)}`; }, 900);
+        }
+      };
     }
   },
-  // SMS
-  { match: /^(send\s+)?(sms|text|message)\s+to\s+([^\s:,]+)[,:\s]\s*(.+)/i, icon:'📨', color:'#4f46e5',
-    handle(m){ const to=m[3].trim(), msg=m[4].trim();
-      return { title:`SMS → ${to}`, desc:`Sending "<em>${esc(msg)}</em>" to <strong>${esc(to)}</strong>`, status:'Opening SMS app...',
-        exec(){ window.location.href=`sms:${encodeURIComponent(to)}?body=${encodeURIComponent(msg)}`; }};
+  // ── WhatsApp message ────────────────────────────────────────────────────────
+  { re: /^(send\s+)?(whatsapp|wa)\s+(message\s+|msg\s+)?to\s+([^:,\n]+)[,:\s]\s*(.+)/i, icon:'💬',
+    run(m) {
+      const to = m[4].trim(), msg = m[5].trim();
+      return {
+        title: `WhatsApp → ${to}`,
+        desc:  `"<em>${esc(msg)}</em>" to <strong>${esc(to)}</strong>`,
+        status: 'Opening WhatsApp...',
+        go() {
+          const isNum = /^\+?\d[\d\s\-()]{6,}$/.test(to);
+          if (isNum) {
+            const ph = to.replace(/\D/g,'');
+            // For Android PWA — intent URL is most reliable
+            setTimeout(() => {
+              window.location.href = `intent://send/${ph}#Intent;scheme=smsto;package=com.whatsapp;end`;
+            }, 900);
+            // Fallback chain
+            setTimeout(() => { try { window.open(`https://wa.me/${ph}?text=${encodeURIComponent(msg)}`, '_blank'); } catch(e){} }, 2400);
+          } else {
+            setTimeout(() => { window.open(`https://wa.me/?text=${encodeURIComponent(msg + ' - from ' + to)}`, '_blank'); }, 900);
+          }
+        }
+      };
     }
   },
-  // Open WhatsApp (no message)
-  { match: /^open\s+whatsapp$/i, icon:'💬', color:'#25D366',
-    handle(){ return { title:'Opening WhatsApp', desc:'Launching WhatsApp', status:'Opening...', exec(){ window.location.href='whatsapp://'; setTimeout(()=>window.open('https://web.whatsapp.com','_blank'),1400); } }; }
-  },
-  // Open YouTube
-  { match: /^open\s+youtube$/i, icon:'▶️', color:'#FF0000',
-    handle(){ return { title:'Opening YouTube', desc:'Launching YouTube', status:'Opening...', exec(){ window.location.href='vnd.youtube://'; setTimeout(()=>window.open('https://youtube.com','_blank'),1200); } }; }
-  },
-  // Open Instagram
-  { match: /^open\s+instagram$/i, icon:'📸', color:'#E1306C',
-    handle(){ return { title:'Opening Instagram', desc:'Launching Instagram', status:'Opening...', exec(){ window.location.href='instagram://'; setTimeout(()=>window.open('https://instagram.com','_blank'),1200); } }; }
-  },
-  // Open Maps / Google Maps
-  { match: /^open\s+(google\s+)?maps?$/i, icon:'🗺️', color:'#22c55e',
-    handle(){ return { title:'Opening Maps', desc:'Launching Google Maps', status:'Opening...', exec(){ window.location.href='geo:0,0?q='; setTimeout(()=>window.open('https://maps.google.com','_blank'),1200); } }; }
-  },
-  // Open any app (generic)
-  { match: /^open\s+(.+)/i, icon:'📱', color:'#d97706',
-    handle(m){ const app=m[1].trim();
-      const schemes={twitter:'twitter://',telegram:'tg://',facebook:'fb://',tiktok:'snssdk1233://',settings:'intent:#Intent;action=android.settings.SETTINGS;end'};
-      const webFallback={twitter:'https://twitter.com',telegram:'https://web.telegram.org',facebook:'https://facebook.com',tiktok:'https://tiktok.com',gmail:'https://mail.google.com'};
-      return { title:`Opening ${app}`, desc:`Launching <strong>${esc(app)}</strong>`, status:`Opening ${app}...`,
-        exec(){
-          const key=app.toLowerCase();
-          if(schemes[key]){ window.location.href=schemes[key]; if(webFallback[key]) setTimeout(()=>window.open(webFallback[key],'_blank'),1400); }
-          else{ window.location.href=`intent://${key}#Intent;scheme=android-app;end`; }
-        }};
+  // ── SMS ─────────────────────────────────────────────────────────────────────
+  { re: /^(send\s+)?(sms|text|message)\s+to\s+([^:,\n]+)[,:\s]\s*(.+)/i, icon:'📨',
+    run(m) {
+      const to = m[3].trim(), msg = m[4].trim();
+      return {
+        title: `SMS → ${to}`,
+        desc:  `"<em>${esc(msg)}</em>" to <strong>${esc(to)}</strong>`,
+        status: 'Opening Messages...',
+        go() {
+          setTimeout(() => { window.location.href = `sms:${encodeURIComponent(to)}?body=${encodeURIComponent(msg)}`; }, 900);
+        }
+      };
     }
   },
-  // Set alarm
-  { match: /^set\s+(an?\s+)?alarm\s+(for\s+)?(.+)/i, icon:'⏰', color:'#f59e0b',
-    handle(m){ const t=m[3].trim(); const parsed=parseTime(t);
-      return { title:`Alarm: ${t}`, desc:`Setting alarm for <strong>${esc(t)}</strong>`, status:'Opening clock app...',
-        exec(){
-          if(parsed) window.location.href=`intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${parsed.h};i.android.intent.extra.alarm.MINUTES=${parsed.m};S.android.intent.extra.alarm.MESSAGE=ByteChief;end`;
-          else window.location.href=`intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_CLOCK;end`;
-        }};
+  // ── Open WhatsApp ────────────────────────────────────────────────────────────
+  { re: /^open\s+whatsapp$/i, icon:'💬',
+    run() {
+      return {
+        title: 'Opening WhatsApp',
+        desc:  'Launching WhatsApp',
+        status: 'Opening...',
+        go() {
+          // Android intent — works in PWA
+          setTimeout(() => {
+            window.location.href = 'intent://launch#Intent;package=com.whatsapp;scheme=whatsapp;end';
+          }, 900);
+          setTimeout(() => { window.open('https://web.whatsapp.com', '_blank'); }, 2400);
+        }
+      };
     }
   },
-  // Set timer
-  { match: /^set\s+(a\s+)?timer\s+(for\s+)?(.+)/i, icon:'⏱️', color:'#f59e0b',
-    handle(m){ const t=m[3].trim(); const secs=parseDuration(t);
-      return { title:`Timer: ${t}`, desc:`Starting timer for <strong>${esc(t)}</strong>`, status:'Opening timer...',
-        exec(){
-          if(secs) window.location.href=`intent:#Intent;action=android.intent.action.SET_TIMER;i.android.intent.extra.timer.LENGTH=${secs};end`;
-          else window.location.href=`intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_CLOCK;end`;
-        }};
+  // ── Open YouTube ────────────────────────────────────────────────────────────
+  { re: /^open\s+youtube$/i, icon:'▶️',
+    run() {
+      return { title:'Opening YouTube', desc:'Launching YouTube', status:'Opening...', go() {
+        setTimeout(() => { window.location.href = 'intent://launch#Intent;package=com.google.android.youtube;end'; }, 900);
+        setTimeout(() => { window.open('https://m.youtube.com', '_blank'); }, 2400);
+      }};
     }
   },
-  // Navigate / directions
-  { match: /^(navigate|directions?|go|take me)\s+to\s+(.+)/i, icon:'🗺️', color:'#22c55e',
-    handle(m){ const dest=m[2].trim();
-      return { title:`Navigate to ${dest}`, desc:`Getting directions to <strong>${esc(dest)}</strong>`, status:'Opening Google Maps...',
-        exec(){ window.location.href=`geo:0,0?q=${encodeURIComponent(dest)}`; setTimeout(()=>window.open(`https://maps.google.com?q=${encodeURIComponent(dest)}`,'_blank'),1200); }};
+  // ── Open Instagram ───────────────────────────────────────────────────────────
+  { re: /^open\s+instagram$/i, icon:'📸',
+    run() {
+      return { title:'Opening Instagram', desc:'Launching Instagram', status:'Opening...', go() {
+        setTimeout(() => { window.location.href = 'intent://launch#Intent;package=com.instagram.android;end'; }, 900);
+        setTimeout(() => { window.open('https://www.instagram.com', '_blank'); }, 2400);
+      }};
     }
   },
-  // Search
-  { match: /^(search|google|look up|find)\s+(.+)/i, icon:'🔍', color:'#4f46e5',
-    handle(m){ const q=m[2].trim();
-      return { title:`Searching: ${q}`, desc:`Googling "<strong>${esc(q)}</strong>"`, status:'Opening browser...',
-        exec(){ window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`,'_blank'); }};
+  // ── Open Maps ───────────────────────────────────────────────────────────────
+  { re: /^open\s+(google\s+)?maps?$/i, icon:'🗺️',
+    run() {
+      return { title:'Opening Maps', desc:'Launching Google Maps', status:'Opening...', go() {
+        setTimeout(() => { window.location.href = 'intent://launch#Intent;package=com.google.android.apps.maps;end'; }, 900);
+        setTimeout(() => { window.open('https://maps.google.com', '_blank'); }, 2400);
+      }};
+    }
+  },
+  // ── Open Camera ─────────────────────────────────────────────────────────────
+  { re: /^open\s+camera$/i, icon:'📷',
+    run() {
+      return { title:'Opening Camera', desc:'Launching Camera', status:'Opening...', go() {
+        setTimeout(() => { window.location.href = 'intent:#Intent;action=android.media.action.STILL_IMAGE_CAMERA;end'; }, 900);
+      }};
+    }
+  },
+  // ── Open Settings ────────────────────────────────────────────────────────────
+  { re: /^open\s+settings$/i, icon:'⚙️',
+    run() {
+      return { title:'Opening Settings', desc:'Launching Settings', status:'Opening...', go() {
+        setTimeout(() => { window.location.href = 'intent:#Intent;action=android.settings.SETTINGS;end'; }, 900);
+      }};
+    }
+  },
+  // ── Generic open app ─────────────────────────────────────────────────────────
+  { re: /^open\s+(.+)/i, icon:'📱',
+    run(m) {
+      const app = m[1].trim();
+      const pkgs = {
+        telegram:  'org.telegram.messenger',
+        twitter:   'com.twitter.android',
+        x:         'com.twitter.android',
+        facebook:  'com.facebook.katana',
+        tiktok:    'com.zhiliaoapp.musically',
+        snapchat:  'com.snapchat.android',
+        gmail:     'com.google.android.gm',
+        chrome:    'com.android.chrome',
+        spotify:   'com.spotify.music',
+        netflix:   'com.netflix.mediaclient',
+        calendar:  'com.google.android.calendar',
+        clock:     'com.android.deskclock',
+        calculator:'com.android.calculator2',
+        files:     'com.google.android.documentsui',
+        gallery:   'com.google.android.apps.photos',
+      };
+      const pkg = pkgs[app.toLowerCase()];
+      return {
+        title: `Opening ${app}`,
+        desc:  `Launching <strong>${esc(app)}</strong>`,
+        status: `Opening ${app}...`,
+        go() {
+          if (pkg) {
+            setTimeout(() => { window.location.href = `intent://launch#Intent;package=${pkg};end`; }, 900);
+          } else {
+            setTimeout(() => { window.location.href = `intent://launch#Intent;package=com.${app.toLowerCase().replace(/\s+/g,'')};end`; }, 900);
+          }
+        }
+      };
+    }
+  },
+  // ── Set Alarm ────────────────────────────────────────────────────────────────
+  { re: /^set\s+(an?\s+)?alarm\s+(for\s+)?(.+)/i, icon:'⏰',
+    run(m) {
+      const t = m[3].trim();
+      const p = parseTime(t);
+      return {
+        title: `Alarm: ${t}`,
+        desc:  `Setting alarm for <strong>${esc(t)}</strong>`,
+        status: 'Opening Clock app...',
+        go() {
+          let url = `intent:#Intent;action=android.intent.action.SET_ALARM;S.android.intent.extra.alarm.MESSAGE=ByteChief`;
+          if (p) url += `;i.android.intent.extra.alarm.HOUR=${p.h};i.android.intent.extra.alarm.MINUTES=${p.m}`;
+          url += ';end';
+          setTimeout(() => { window.location.href = url; }, 900);
+        }
+      };
+    }
+  },
+  // ── Set Timer ────────────────────────────────────────────────────────────────
+  { re: /^set\s+(a\s+)?timer\s+(for\s+)?(.+)/i, icon:'⏱️',
+    run(m) {
+      const t = m[3].trim();
+      const s = parseDur(t);
+      return {
+        title: `Timer: ${t}`,
+        desc:  `Starting timer for <strong>${esc(t)}</strong>`,
+        status: 'Opening Timer...',
+        go() {
+          let url = `intent:#Intent;action=android.intent.action.SET_TIMER`;
+          if (s) url += `;i.android.intent.extra.timer.LENGTH=${s}`;
+          url += ';end';
+          setTimeout(() => { window.location.href = url; }, 900);
+        }
+      };
+    }
+  },
+  // ── Navigate ─────────────────────────────────────────────────────────────────
+  { re: /^(navigate|directions?|go|take me)\s+to\s+(.+)/i, icon:'🗺️',
+    run(m) {
+      const dest = m[2].trim();
+      return {
+        title: `Navigate to ${dest}`,
+        desc:  `Directions to <strong>${esc(dest)}</strong>`,
+        status: 'Opening Maps...',
+        go() {
+          setTimeout(() => {
+            window.location.href = `intent://maps.google.com/maps?daddr=${encodeURIComponent(dest)}#Intent;scheme=https;package=com.google.android.apps.maps;end`;
+          }, 900);
+          setTimeout(() => { window.open(`https://maps.google.com?q=${encodeURIComponent(dest)}`, '_blank'); }, 2400);
+        }
+      };
+    }
+  },
+  // ── Search ───────────────────────────────────────────────────────────────────
+  { re: /^(search|google|look up|find)\s+(.+)/i, icon:'🔍',
+    run(m) {
+      const q = m[2].trim();
+      return {
+        title: `Searching: ${q}`,
+        desc:  `Googling <strong>${esc(q)}</strong>`,
+        status: 'Opening browser...',
+        go() { setTimeout(() => { window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank'); }, 700); }
+      };
     }
   },
 ];
 
-function parseTime(s){ s=s.toLowerCase(); const m=s.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/); if(m){let h=parseInt(m[1]);const mn=parseInt(m[2]||'0');if(m[3]==='pm'&&h!==12)h+=12;if(m[3]==='am'&&h===12)h=0;return{h,m:mn};} const m24=s.match(/^(\d{1,2}):(\d{2})$/);if(m24)return{h:parseInt(m24[1]),m:parseInt(m24[2])};return null;}
-function parseDuration(s){ s=s.toLowerCase();let sc=0;const h=s.match(/(\d+)\s*(hour|hr)/);if(h)sc+=parseInt(h[1])*3600;const m=s.match(/(\d+)\s*(minute|min)/);if(m)sc+=parseInt(m[1])*60;const se=s.match(/(\d+)\s*(second|sec)/);if(se)sc+=parseInt(se[1]);return sc||null;}
-
-function matchCommand(text){
-  const t=text.trim();
-  for(const cmd of COMMANDS){
-    const m=t.match(cmd.match);
-    if(m){ const r=cmd.handle(m); r.icon=cmd.icon; r.color=cmd.color; return r; }
+function matchCmd(text) {
+  for (const c of CMDS) {
+    const m = text.trim().match(c.re);
+    if (m) { const r = c.run(m); r.icon = c.icon; return r; }
   }
   return null;
+}
+
+function parseTime(s) {
+  s = s.toLowerCase();
+  const m = s.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i);
+  if (m) {
+    let h = parseInt(m[1]); const mn = parseInt(m[2]||'0');
+    if (m[3]==='pm' && h!==12) h+=12; if (m[3]==='am' && h===12) h=0;
+    return { h, m: mn };
+  }
+  const m2 = s.match(/^(\d{1,2}):(\d{2})$/);
+  if (m2) return { h:parseInt(m2[1]), m:parseInt(m2[2]) };
+  return null;
+}
+
+function parseDur(s) {
+  s = s.toLowerCase(); let sc = 0;
+  const h=s.match(/(\d+)\s*(hour|hr)/); if(h) sc+=parseInt(h[1])*3600;
+  const m=s.match(/(\d+)\s*(minute|min)/); if(m) sc+=parseInt(m[1])*60;
+  const se=s.match(/(\d+)\s*(second|sec)/); if(se) sc+=parseInt(se[1]);
+  return sc || null;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', async()=>{
-  if(!BC.token){ window.location.href='login.html'; return; }
-  try{
-    const r=await api('/api/auth/verify');
-    if(!r?.user) throw new Error();
-    BC.user=r.user; setUserUI(); loadHistory();
-    if(BC.micGranted){ setTimeout(startWakeListening, 800); }
-    else{ setTimeout(()=>document.getElementById('permModal').classList.add('show'), 1000); }
-  }catch{ localStorage.removeItem('bc_token'); window.location.href='login.html'; }
+window.addEventListener('DOMContentLoaded', async () => {
+  BC.token = getToken();
+  BC.user  = getUser();
+  if (!BC.token) { window.location.replace('login.html'); return; }
+
+  // Sync token to sessionStorage so it survives tab navigation
+  sessionStorage.setItem('bc_token', BC.token);
+
+  try {
+    const r = await fetch('/api/auth/verify', { headers: { Authorization: 'Bearer ' + BC.token } });
+    if (!r.ok) throw new Error('invalid');
+    const d = await r.json();
+    BC.user = d.user;
+    // Refresh both storages
+    sessionStorage.setItem('bc_user', JSON.stringify(BC.user));
+    if (localStorage.getItem('bc_remember') === '1') {
+      localStorage.setItem('bc_user', JSON.stringify(BC.user));
+    }
+  } catch {
+    // Token invalid — clear and redirect
+    ['bc_token','bc_user','bc_remember'].forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+    window.location.replace('login.html'); return;
+  }
+
+  setUserUI();
+  loadHistory();
+
+  if (BC.micGranted) {
+    setTimeout(startWake, 800);
+  } else {
+    setTimeout(() => document.getElementById('permBg').classList.add('show'), 1000);
+  }
+
+  // Keep session alive — re-verify every 10 min
+  setInterval(refreshSession, 10 * 60 * 1000);
+
+  // Re-start wake word when app comes back to foreground
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && BC.micGranted && BC.vs === 'idle') {
+      setTimeout(startWake, 600);
+    }
+  });
 });
 
-function setUserUI(){
-  const n=BC.user.name||BC.user.email?.split('@')[0]||'User';
-  document.getElementById('userName').textContent=n;
-  document.getElementById('userEmail').textContent=BC.user.email||'';
-  document.getElementById('userAv').textContent=n.charAt(0).toUpperCase();
+async function refreshSession() {
+  try {
+    const r = await fetch('/api/auth/verify', { headers: { Authorization: 'Bearer ' + BC.token } });
+    if (!r.ok) { logout(); }
+  } catch {}
 }
 
-async function api(url,opts={}){
-  const r=await fetch(url,{headers:{'Content-Type':'application/json',Authorization:'Bearer '+BC.token,...(opts.headers||{})},...opts});
-  if(!r.ok){const e=await r.json().catch(()=>({error:'Error'}));throw new Error(e.error||'Failed');}
+function setUserUI() {
+  const n = BC.user?.name || BC.user?.email?.split('@')[0] || 'User';
+  document.getElementById('sbName').textContent  = n;
+  document.getElementById('sbEmail').textContent = BC.user?.email || '';
+  document.getElementById('sbAv').textContent    = n.charAt(0).toUpperCase();
+}
+
+async function api(url, opts = {}) {
+  const r = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + BC.token, ...(opts.headers||{}) },
+    ...opts,
+  });
+  if (!r.ok) { const e = await r.json().catch(()=>({error:'Error'})); throw new Error(e.error||'Failed'); }
   return r.json();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// SEND TO AI (text chat only)
+// SEND TO AI
 // ══════════════════════════════════════════════════════════════════════════════
-async function sendMessage(){
-  const input=document.getElementById('msgInput');
-  const text=input.value.trim();
-  if(!text||BC.isSending) return;
-  document.getElementById('welcomeState')?.remove();
-  input.value=''; autoResize(input);
-  BC.chatHistory.push({role:'user',content:text});
-  appendMsg('user',text);
+async function sendMsg() {
+  const inp = document.getElementById('msgInput');
+  const txt = inp.value.trim();
+  if (!txt || BC.sending) return;
+  document.getElementById('welcome')?.remove();
+  inp.value = ''; autoResize(inp);
+  BC.chatHist.push({ role:'user', content:txt });
+  addBubble('out', txt);
   showTyping();
-  document.getElementById('sendBtn').disabled=true;
-  BC.isSending=true;
-  try{
-    const data=await api('/api/chat',{method:'POST',body:JSON.stringify({message:text,history:BC.chatHistory.slice(-10)})});
+  document.getElementById('sendBtn').disabled = true;
+  BC.sending = true;
+
+  try {
+    const d = await api('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message:txt, history:BC.chatHist.slice(-10) }),
+    });
     hideTyping();
-    BC.chatHistory.push({role:'assistant',content:data.response});
-    appendMsg('ai',data.response);
-    if(data.action) setTimeout(()=>executeCmd(buildCmdFromServer(data.action)),400);
+    BC.chatHist.push({ role:'assistant', content:d.response });
+    addBubble('in', d.response);
+    if (d.action) setTimeout(() => execCmd(buildFromServer(d.action)), 400);
     refreshHistory();
-  }catch(e){ hideTyping(); appendMsg('ai','⚠️ '+(e.message||'Something went wrong.')); }
-  BC.isSending=false;
-  document.getElementById('sendBtn').disabled=false;
-  input.focus();
+  } catch(e) {
+    hideTyping();
+    addBubble('in', '⚠️ ' + (e.message || 'Something went wrong.'));
+  }
+
+  BC.sending = false;
+  document.getElementById('sendBtn').disabled = false;
+  inp.focus();
 }
 
-function buildCmdFromServer(action){
-  const map={
-    call:{icon:'📞',title:`Calling ${action.target}`,desc:`Dialling <strong>${esc(action.target)}</strong>`,status:'Opening dialler...',exec(){window.location.href=`tel:${encodeURIComponent(action.target)}`;}},
-    sms:{icon:'📨',title:`SMS to ${action.target}`,desc:`Sending SMS to <strong>${esc(action.target)}</strong>`,status:'Opening SMS...',exec(){window.location.href=`sms:${encodeURIComponent(action.target)}?body=${encodeURIComponent(action.smsMessage||'')}`;}},
-    open:{icon:'📱',title:`Opening ${action.target}`,desc:`Launching <strong>${esc(action.target)}</strong>`,status:'Opening...',exec(){const c=matchCommand('open '+action.target);if(c)c.exec();}},
+function buildFromServer(a) {
+  const map = {
+    call: { icon:'📞', title:`Calling ${a.target}`, desc:`Dialling <strong>${esc(a.target)}</strong>`, status:'Opening Phone...', go(){setTimeout(()=>{window.location.href=`tel:${encodeURIComponent(a.target)}`;},900);} },
+    sms:  { icon:'📨', title:`SMS to ${a.target}`,  desc:`Sending to <strong>${esc(a.target)}</strong>`, status:'Opening SMS...', go(){setTimeout(()=>{window.location.href=`sms:${encodeURIComponent(a.target)}?body=${encodeURIComponent(a.smsMessage||'')}`;},900);} },
+    open: { icon:'📱', title:`Opening ${a.target}`, desc:`Launching <strong>${esc(a.target)}</strong>`, status:'Opening...', go(){const c=matchCmd('open '+a.target);if(c)c.go();} },
   };
-  return map[action.type]||null;
+  return map[a.type] || null;
 }
 
-function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
-function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,88)+'px'; }
-function quickSend(text){ document.getElementById('msgInput').value=text; sendMessage(); }
+function handleKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
+function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+function qs(t){ document.getElementById('msgInput').value=t; sendMsg(); }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// MESSAGES
+// MESSAGES — iMessage bubbles
 // ══════════════════════════════════════════════════════════════════════════════
-function appendMsg(role,text){
-  const wrap=document.getElementById('messages');
-  const div=document.createElement('div'); div.className=`msg ${role}`;
-  const time=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-  const init=role==='ai'?'🤖':(BC.user?.name?.charAt(0).toUpperCase()||'U');
-  div.innerHTML=`<div class="msg-av ${role}">${init}</div><div><div class="msg-bubble">${role==='ai'?fmtAI(text):esc(text)}</div><div class="msg-time">${time}</div></div>`;
-  wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight;
+function addBubble(dir, text) {
+  const wrap = document.getElementById('messages');
+  const row  = document.createElement('div');
+  row.className = `msg-row ${dir}`;
+  const time = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  const html = dir==='in' ? fmtAI(text) : esc(text);
+  row.innerHTML = `
+    <div class="bubble">${html}</div>
+    <div class="msg-time">
+      ${time}
+      ${dir==='out' ? '<span class="read-tick">✓✓</span>' : ''}
+    </div>`;
+  wrap.appendChild(row);
+  wrap.scrollTop = wrap.scrollHeight;
 }
-function fmtAI(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code style="background:rgba(255,255,255,.08);padding:.07rem .28rem;border-radius:4px;font-size:.85em;">$1</code>').replace(/\n/g,'<br>'); }
-function showTyping(){ const w=document.getElementById('messages'); const el=document.createElement('div'); el.id='typing'; el.className='msg'; el.innerHTML='<div class="msg-av ai">🤖</div><div class="typing-bubble"><span></span><span></span><span></span></div>'; w.appendChild(el); w.scrollTop=w.scrollHeight; }
+
+function fmtAI(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`([^`]+)`/g,'<code style="background:rgba(255,255,255,.08);padding:.06rem .28rem;border-radius:4px;font-size:.85em;font-family:monospace;">$1</code>')
+    .replace(/\n/g,'<br>');
+}
+
+function showTyping() {
+  const wrap = document.getElementById('messages');
+  const el = document.createElement('div');
+  el.id='typing'; el.className='typing-row';
+  el.innerHTML='<div class="typing-av">🤖</div><div class="typing-bubble"><span></span><span></span><span></span></div>';
+  wrap.appendChild(el); wrap.scrollTop=wrap.scrollHeight;
+}
 function hideTyping(){ document.getElementById('typing')?.remove(); }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// EXECUTE COMMAND
+// EXECUTE COMMAND — bottom sheet style
 // ══════════════════════════════════════════════════════════════════════════════
-function executeCmd(cmd){
-  if(!cmd) return;
-  document.getElementById('actIcon').textContent   = cmd.icon||'⚡';
-  document.getElementById('actTitle').textContent  = cmd.title||'Executing';
-  document.getElementById('actDesc').innerHTML     = cmd.desc||'';
+function execCmd(cmd) {
+  if (!cmd) return;
+  document.getElementById('actIcon').textContent  = cmd.icon  || '⚡';
+  document.getElementById('actTitle').textContent = cmd.title || 'Executing';
+  document.getElementById('actDesc').innerHTML    = cmd.desc  || '';
   document.getElementById('actStatus').textContent = '';
-  const bar=document.getElementById('actBar'); bar.style.transition='none'; bar.style.width='0';
-  document.getElementById('actionOverlay').classList.add('show');
-  setTimeout(()=>{ bar.style.transition='width 1.8s ease'; bar.style.width='90%'; }, 80);
-  setTimeout(()=>{ document.getElementById('actStatus').textContent=cmd.status||'Processing...'; }, 500);
-  speak(cmd.title||'Done');
-  setTimeout(()=>{ try{cmd.exec();}catch(e){console.warn(e);} }, 1000);
-  setTimeout(()=>{ bar.style.width='100%'; document.getElementById('actStatus').textContent='✅ Done!'; }, 2200);
+  const bar = document.getElementById('actBar');
+  bar.style.transition = 'none'; bar.style.width = '0';
+  document.getElementById('actionBg').classList.add('show');
+  setTimeout(()=>{ bar.style.transition='width 1.8s ease'; bar.style.width='85%'; },80);
+  setTimeout(()=>{ document.getElementById('actStatus').textContent=cmd.status||'Processing...'; },500);
+  speak(cmd.title);
+  cmd.go();
+  setTimeout(()=>{ bar.style.width='100%'; document.getElementById('actStatus').textContent='✅ Done!'; },2400);
 }
 
-function closeAction(){ document.getElementById('actionOverlay').classList.remove('show'); document.getElementById('actBar').style.width='0'; }
+function closeAction(){ document.getElementById('actionBg').classList.remove('show'); document.getElementById('actBar').style.width='0'; }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // SPEECH SYNTHESIS
 // ══════════════════════════════════════════════════════════════════════════════
-function speak(text,rate=1.05){
-  if(!window.speechSynthesis) return;
+function speak(text, rate=1.05) {
+  if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
+  const u = new SpeechSynthesisUtterance(text);
   u.rate=rate; u.volume=0.9; u.lang='en-US';
-  const vs=window.speechSynthesis.getVoices();
-  const pref=vs.find(v=>v.lang==='en-US'&&v.localService)||vs.find(v=>v.lang.startsWith('en'));
-  if(pref) u.voice=pref;
+  const vs = window.speechSynthesis.getVoices();
+  const pref = vs.find(v=>v.lang==='en-US'&&v.localService) || vs.find(v=>v.lang.startsWith('en'));
+  if (pref) u.voice = pref;
   window.speechSynthesis.speak(u);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // PERMISSIONS
 // ══════════════════════════════════════════════════════════════════════════════
-async function grantPermissions(){
-  document.getElementById('permModal').classList.remove('show');
-  try{
-    await navigator.mediaDevices.getUserMedia({audio:true});
-    BC.micGranted=true; localStorage.setItem('bc_mic','1');
-    toast('✅ Microphone granted! Say "ByteChief" to wake me.','ok');
-    speak('Permissions granted. I am ready. Say ByteChief to wake me.');
-    setTimeout(startWakeListening, 1200);
-  }catch(e){
-    toast('❌ Microphone denied. Use text input instead.','err');
+async function grantPerms() {
+  document.getElementById('permBg').classList.remove('show');
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(t => t.stop()); // release immediately
+    BC.micGranted = true;
+    localStorage.setItem('bc_mic', '1');
+    toast('✅ Microphone access granted!', 'ok');
+    speak('Permissions granted. Say ByteChief to wake me up.');
+    setTimeout(startWake, 1200);
+  } catch(e) {
+    toast('❌ Microphone denied. Text input still works.', 'err');
   }
 }
-function denyPermissions(){ document.getElementById('permModal').classList.remove('show'); toast('Voice disabled — text input still works.','info'); }
+function denyPerms() { document.getElementById('permBg').classList.remove('show'); toast('Voice disabled — text still works.','info'); }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// VOICE STATE: WAKE LISTENING
+// WAKE WORD — background continuous listening
 // ══════════════════════════════════════════════════════════════════════════════
-function startWakeListening(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR||BC.voiceState!=='idle') return;
-  setVoiceState('wake-listening');
+const WAKES = ['bytechief','byte chief','byte-chief','by chief','bite chief','bytechef','byte chef','b chief','bytchi'];
 
-  try{
-    BC.wakeRec=new SR();
-    BC.wakeRec.continuous=true;
-    BC.wakeRec.interimResults=true;
-    BC.wakeRec.lang='en-US';
-    BC.wakeRec.maxAlternatives=3;
+function startWake() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR || BC.vs !== 'idle') return;
+  setVS('wake');
+  try {
+    BC.wakeRec = new SR();
+    BC.wakeRec.continuous = true;
+    BC.wakeRec.interimResults = true;
+    BC.wakeRec.lang = 'en-US';
+    BC.wakeRec.maxAlternatives = 3;
 
-    BC.wakeRec.onresult=(e)=>{
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        for(let j=0;j<e.results[i].length;j++){
-          const t=e.results[i][j].transcript.toLowerCase().trim();
-          if(WAKE_PATTERNS.some(p=>t.includes(p))){
+    BC.wakeRec.onresult = (e) => {
+      for (let i=e.resultIndex; i<e.results.length; i++) {
+        for (let j=0; j<e.results[i].length; j++) {
+          const t = e.results[i][j].transcript.toLowerCase().trim();
+          if (WAKES.some(w => t.includes(w))) {
             BC.wakeRec.stop();
-            onWakeDetected(t);
+            onWake(t);
             return;
           }
         }
       }
     };
 
-    BC.wakeRec.onend=()=>{
-      if(BC.voiceState==='wake-listening'){
-        setVoiceState('idle');
-        setTimeout(startWakeListening, 500); // restart
-      }
+    BC.wakeRec.onend = () => {
+      if (BC.vs === 'wake') { setVS('idle'); setTimeout(startWake, 600); }
     };
-    BC.wakeRec.onerror=(e)=>{ if(e.error!=='no-speech'&&e.error!=='aborted') console.warn('Wake error:',e.error); };
+    BC.wakeRec.onerror = (e) => {
+      if (e.error !== 'no-speech' && e.error !== 'aborted') console.warn('Wake:', e.error);
+    };
     BC.wakeRec.start();
-  }catch(e){ setVoiceState('idle'); }
+  } catch(e) { setVS('idle'); }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ON WAKE DETECTED
-// ══════════════════════════════════════════════════════════════════════════════
-function onWakeDetected(fullTranscript){
-  setVoiceState('awake');
+function onWake(transcript) {
+  setVS('awake');
 
-  // Pick random wake response
-  const response=WAKE_RESPONSES[Math.floor(Math.random()*WAKE_RESPONSES.length)];
-
-  // Show wake overlay
-  document.getElementById('wakeResponse').textContent=response;
-  document.getElementById('wakeTranscript').textContent='Listening for your command...';
+  // Pick wake response
+  const resp = WAKE_RESPONSES[Math.floor(Math.random() * WAKE_RESPONSES.length)];
+  document.getElementById('wakeResp').textContent = resp;
+  document.getElementById('wakeLive').textContent = 'Listening for your command...';
   document.getElementById('wakeOverlay').classList.add('show');
 
-  // Speak the response
-  speak(response);
-
   // Add to chat
-  appendMsg('ai','👂 '+response);
-  document.getElementById('welcomeState')?.remove();
+  document.getElementById('welcome')?.remove();
+  addBubble('in', '👂 ' + resp);
 
-  // Check if command already in same utterance: "ByteChief call John"
-  let inlineCmd='';
-  for(const p of WAKE_PATTERNS){
-    const idx=fullTranscript.indexOf(p);
-    if(idx!==-1){ inlineCmd=fullTranscript.slice(idx+p.length).replace(/^[\s,!?]+/,'').trim(); break; }
+  // Speak response
+  speak(resp);
+
+  // Check if command already in same utterance: "ByteChief call Samuel"
+  let inline = '';
+  for (const w of WAKES) {
+    const i = transcript.indexOf(w);
+    if (i !== -1) { inline = transcript.slice(i + w.length).replace(/^[\s,!?]+/,'').trim(); break; }
   }
 
-  if(inlineCmd && inlineCmd.length>2){
-    // Execute inline command immediately
-    document.getElementById('wakeTranscript').textContent='"'+inlineCmd+'"';
-    setTimeout(()=>{ processVoiceCommand(inlineCmd); }, 600);
+  if (inline && inline.length > 2) {
+    document.getElementById('wakeLive').textContent = '"' + inline + '"';
+    setTimeout(() => processVoiceCmd(inline), 500);
   } else {
-    // Wait for follow-up command
-    setTimeout(startCommandListening, 800);
+    setTimeout(startCmdListen, 700);
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// VOICE STATE: COMMAND LISTENING
-// ══════════════════════════════════════════════════════════════════════════════
-function startCommandListening(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ cancelWake(); return; }
-  setVoiceState('cmd-listening');
+function startCmdListen() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { cancelWake(); return; }
+  setVS('cmd');
 
-  try{
-    BC.cmdRec=new SR();
-    BC.cmdRec.continuous=false;
-    BC.cmdRec.interimResults=true;
-    BC.cmdRec.lang='en-US';
+  try {
+    BC.cmdRec = new SR();
+    BC.cmdRec.continuous = false;
+    BC.cmdRec.interimResults = true;
+    BC.cmdRec.lang = 'en-US';
 
-    // Auto-cancel if no speech in 8s
-    BC.silenceTimer=setTimeout(()=>{
-      try{BC.cmdRec.stop();}catch(e){}
-      document.getElementById('wakeTranscript').textContent="I didn't hear a command...";
-      appendMsg('ai',"I didn't catch that. Say **ByteChief** to try again!");
+    BC.silTimer = setTimeout(() => {
+      try { BC.cmdRec.stop(); } catch(e) {}
+      document.getElementById('wakeLive').textContent = "Didn't hear a command...";
+      addBubble('in', "I didn't catch that. Say **ByteChief** to try again!");
       setTimeout(cancelWake, 1500);
-    },8000);
+    }, 8000);
 
-    BC.cmdRec.onresult=(e)=>{
-      let transcript='';
-      for(let i=e.resultIndex;i<e.results.length;i++) transcript+=e.results[i][0].transcript;
-      document.getElementById('wakeTranscript').textContent='"'+transcript+'"';
-
-      if(e.results[e.results.length-1].isFinal){
-        clearTimeout(BC.silenceTimer);
-        const final=transcript.trim();
-        if(final) processVoiceCommand(final);
-        else{ appendMsg('ai',"I didn't catch that. Say **ByteChief** to wake me again!"); cancelWake(); }
+    BC.cmdRec.onresult = (e) => {
+      let t = '';
+      for (let i=e.resultIndex; i<e.results.length; i++) t += e.results[i][0].transcript;
+      document.getElementById('wakeLive').textContent = '"' + t + '"';
+      if (e.results[e.results.length-1].isFinal) {
+        clearTimeout(BC.silTimer);
+        const final = t.trim();
+        if (final) processVoiceCmd(final);
+        else { addBubble('in','Didn\'t catch that. Say **ByteChief** again!'); cancelWake(); }
       }
     };
 
-    BC.cmdRec.onend=()=>{
-      clearTimeout(BC.silenceTimer);
-      if(BC.voiceState==='cmd-listening'){ cancelWake(); }
-    };
-
-    BC.cmdRec.onerror=(e)=>{
-      clearTimeout(BC.silenceTimer);
-      if(e.error==='no-speech'){ appendMsg('ai',"I didn't hear anything. Say **ByteChief** to try again!"); }
+    BC.cmdRec.onend = () => { clearTimeout(BC.silTimer); if(BC.vs==='cmd') cancelWake(); };
+    BC.cmdRec.onerror = (e) => {
+      clearTimeout(BC.silTimer);
+      if(e.error==='no-speech') addBubble('in','Nothing heard. Say **ByteChief** to wake me again!');
       cancelWake();
     };
 
     BC.cmdRec.start();
-  }catch(e){ cancelWake(); }
+  } catch(e) { cancelWake(); }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PROCESS VOICE COMMAND — command first, AI chat fallback
+// PROCESS VOICE COMMAND
 // ══════════════════════════════════════════════════════════════════════════════
-function processVoiceCommand(text){
-  // Close wake overlay
+function processVoiceCmd(text) {
   document.getElementById('wakeOverlay').classList.remove('show');
+  setVS('idle');
 
-  // Show in chat as user message
-  appendMsg('user', text);
-  BC.chatHistory.push({role:'user',content:text});
+  addBubble('out', text);
+  BC.chatHist.push({ role:'user', content:text });
 
-  // Try local command engine FIRST
-  const cmd=matchCommand(text);
-  if(cmd){
-    // Direct command — no need to go to AI
-    const confirmation=`Got it! ${cmd.title} 🚀`;
-    appendMsg('ai', confirmation);
-    BC.chatHistory.push({role:'assistant',content:confirmation});
-    setTimeout(()=>executeCmd(cmd), 400);
+  // Try local command first
+  const cmd = matchCmd(text);
+  if (cmd) {
+    const conf = `Got it! ${cmd.title} 🚀`;
+    addBubble('in', conf);
+    BC.chatHist.push({ role:'assistant', content:conf });
+    setTimeout(() => execCmd(cmd), 300);
     refreshHistory();
-    setVoiceState('idle');
-    setTimeout(startWakeListening, 2000);
+    setTimeout(startWake, 3000);
     return;
   }
 
-  // Not a command — send to AI
-  setVoiceState('idle');
-  setTimeout(startWakeListening, 2000);
+  // Send to AI
   document.getElementById('msgInput').value = text;
-  sendMessage();
+  sendMsg();
+  setTimeout(startWake, 3000);
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// CANCEL WAKE
-// ══════════════════════════════════════════════════════════════════════════════
-function cancelWake(){
-  clearTimeout(BC.silenceTimer);
-  try{if(BC.cmdRec) BC.cmdRec.stop();}catch(e){}
+function cancelWake() {
+  clearTimeout(BC.silTimer);
+  try { if(BC.cmdRec) BC.cmdRec.stop(); } catch(e) {}
   document.getElementById('wakeOverlay').classList.remove('show');
-  setVoiceState('idle');
-  setTimeout(startWakeListening, 600);
+  setVS('idle');
+  setTimeout(startWake, 600);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 // VOICE STATE MACHINE
 // ══════════════════════════════════════════════════════════════════════════════
-function setVoiceState(state){
-  BC.voiceState=state;
-  const btn=document.getElementById('voiceBtn');
-  const status=document.getElementById('voiceStatus');
+function setVS(state) {
+  BC.vs = state;
+  const pill = document.getElementById('wakePill');
+  const pillTxt = document.getElementById('wakePillText');
+  const mic  = document.getElementById('micBtn');
+  const lbl  = document.getElementById('voiceLabel');
 
-  if(state==='idle'){
-    btn.className='voice-btn idle'; status.className='voice-status'; status.textContent='';
-  } else if(state==='wake-listening'){
-    btn.className='voice-btn wake-listening';
-    status.className='voice-status wake'; status.textContent='🎙️ Say "ByteChief" to wake';
-  } else if(state==='awake'){
-    btn.className='voice-btn cmd-listening';
-    status.className='voice-status awake'; status.textContent='👂 Awake — speak your command';
-  } else if(state==='cmd-listening'){
-    btn.className='voice-btn cmd-listening';
-    status.className='voice-status cmd'; status.textContent='🎙️ Listening...';
+  pill.className = 'wake-pill';
+  mic.className  = 'mic-btn';
+  lbl.className  = 'voice-label';
+  lbl.textContent = '';
+
+  if (state === 'idle') {
+    pillTxt.textContent = 'Say ByteChief';
+  } else if (state === 'wake') {
+    pill.classList.add('active'); pillTxt.textContent = '● Listening';
+    mic.classList.add('wake');
+    lbl.classList.add('show','wake'); lbl.textContent = '🎙️ Say "ByteChief"';
+  } else if (state === 'awake') {
+    pill.classList.add('active','listening'); pillTxt.textContent = '● Awake';
+    mic.classList.add('awake');
+    lbl.classList.add('show','awake'); lbl.textContent = '👂 Speak your command';
+  } else if (state === 'cmd') {
+    pill.classList.add('listening'); pillTxt.textContent = '● Listening...';
+    mic.classList.add('cmd');
+    lbl.classList.add('show','cmd'); lbl.textContent = '🎙️ Listening...';
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// MANUAL VOICE BUTTON & WAKE
-// ══════════════════════════════════════════════════════════════════════════════
-function onVoiceBtnClick(){
-  if(!BC.micGranted){ document.getElementById('permModal').classList.add('show'); return; }
-  if(BC.voiceState==='cmd-listening'){ cancelWake(); return; }
-  if(BC.voiceState==='awake'){ cancelWake(); return; }
+function onMicBtnClick() {
+  if (!BC.micGranted) { document.getElementById('permBg').classList.add('show'); return; }
+  if (BC.vs === 'cmd' || BC.vs === 'awake') { cancelWake(); return; }
   manualWake();
 }
 
-function manualWake(){
-  if(!BC.micGranted){ document.getElementById('permModal').classList.add('show'); return; }
-  try{if(BC.wakeRec) BC.wakeRec.stop();}catch(e){}
-  setVoiceState('idle');
-  onWakeDetected('bytechief manual');
+function manualWake() {
+  if (!BC.micGranted) { document.getElementById('permBg').classList.add('show'); return; }
+  try { if (BC.wakeRec) BC.wakeRec.stop(); } catch(e) {}
+  setVS('idle');
+  onWake('bytechief manual');
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// SIDEBAR / HISTORY
+// SIDEBAR & HISTORY
 // ══════════════════════════════════════════════════════════════════════════════
-function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
-
-async function loadHistory(){
-  try{
-    const data=await api('/api/commands/history'); const logs=data.logs||[];
-    const list=document.getElementById('historyList');
-    if(!logs.length){list.innerHTML='<div style="padding:10px;color:var(--muted);font-size:.76rem;">No history yet</div>';return;}
-    window._logs=logs;
-    list.innerHTML=logs.slice(0,30).map((l,i)=>`<div class="h-item" onclick="replayLog(${i})" title="${esc(l.command||'')}">${esc((l.command||'').slice(0,32))}${(l.command||'').length>32?'…':''}</div>`).join('');
-  }catch{}
+function toggleSB() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sbOverlay').classList.toggle('show');
 }
-function refreshHistory(){ setTimeout(loadHistory,500); }
-function replayLog(i){ const l=window._logs?.[i];if(!l)return; document.getElementById('welcomeState')?.remove(); appendMsg('user',l.command); appendMsg('ai',l.response); document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
-function newChat(){ BC.chatHistory=[]; document.getElementById('messages').innerHTML=''; const ws=document.createElement('div');ws.id='welcomeState';ws.className='welcome';ws.innerHTML=`<img src="/assets/logo-dark.png" alt=""><h2>New chat</h2><p>What can I help with?</p><div class="wake-hint">🎙️ Say <strong>"ByteChief"</strong> to wake me, then give your command.</div><div class="qa-wrap"><button class="qa-btn" onclick="manualWake()">🎙️ Wake ByteChief</button><button class="qa-btn" onclick="quickSend('What can you do?')">🤖 Capabilities</button></div>`;document.getElementById('messages').appendChild(ws);document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show'); }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// DOWNLOAD / LOGOUT
-// ══════════════════════════════════════════════════════════════════════════════
-async function downloadHistory(){
-  try{
-    const d=await api('/api/commands/history');
-    const t=(d.logs||[]).map(l=>`[${new Date(l.createdAt).toLocaleString()}]\nYou: ${l.command}\nByteChief: ${l.response}`).join('\n\n---\n\n');
-    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t||'No history.'],{type:'text/plain'}));a.download='bytechief-history.txt';a.click();
+async function loadHistory() {
+  try {
+    const d = await api('/api/commands/history');
+    const logs = d.logs || [];
+    const list = document.getElementById('sbList');
+    if (!logs.length) { list.innerHTML='<div style="padding:10px;color:var(--muted);font-size:.76rem;">No history yet</div>'; return; }
+    window._logs = logs;
+    list.innerHTML = logs.slice(0,30).map((l,i)=>`
+      <div class="sb-item" onclick="replayLog(${i})" title="${esc(l.command||'')}">
+        ${esc((l.command||'').slice(0,32))}${(l.command||'').length>32?'…':''}
+      </div>`).join('');
+  } catch {}
+}
+function refreshHistory(){ setTimeout(loadHistory, 500); }
+
+function replayLog(i) {
+  const l = window._logs?.[i]; if(!l) return;
+  document.getElementById('welcome')?.remove();
+  addBubble('out', l.command); addBubble('in', l.response);
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sbOverlay').classList.remove('show');
+}
+
+function newChat() {
+  BC.chatHist = [];
+  document.getElementById('messages').innerHTML = '';
+  const w = document.createElement('div'); w.id='welcome'; w.className='welcome';
+  w.innerHTML = `<img src="/assets/logo-dark.png" alt=""><h2>New chat</h2><p>What can I help with?</p><div class="wake-card"><div class="wake-card-title">🎙️ Say "ByteChief" to wake me</div></div><div class="qs"><button class="q" onclick="manualWake()">🎙️ Wake ByteChief</button><button class="q" onclick="qs('What can you do?')">🤖 Help</button></div>`;
+  document.getElementById('messages').appendChild(w);
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sbOverlay').classList.remove('show');
+}
+
+async function dlHistory() {
+  try {
+    const d = await api('/api/commands/history');
+    const t = (d.logs||[]).map(l=>`[${new Date(l.createdAt).toLocaleString()}]\nYou: ${l.command}\nByteChief: ${l.response}`).join('\n\n---\n\n');
+    const a = document.createElement('a'); a.href=URL.createObjectURL(new Blob([t||'No history.'],{type:'text/plain'})); a.download='bytechief-history.txt'; a.click();
     toast('Downloaded ✓','ok');
-  }catch{toast('Download failed','err');}
+  } catch { toast('Download failed','err'); }
 }
-function logout(){ try{if(BC.wakeRec)BC.wakeRec.stop();}catch(e){} localStorage.removeItem('bc_token');localStorage.removeItem('bc_user');window.location.href='login.html'; }
+
+function logout() {
+  try { if(BC.wakeRec) BC.wakeRec.stop(); } catch(e) {}
+  ['bc_token','bc_user','bc_remember','bc_mic'].forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+  window.location.replace('login.html');
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ══════════════════════════════════════════════════════════════════════════════
-function toast(msg,type='ok'){ const w=document.getElementById('toasts');const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(14px)';el.style.transition='.25s';setTimeout(()=>el.remove(),250);},3500); }
+function toast(msg, type='ok') {
+  const w=document.getElementById('toasts');
+  const el=document.createElement('div'); el.className=`toast ${type}`; el.textContent=msg;
+  w.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='.25s'; setTimeout(()=>el.remove(),250); },3500);
+}
 function esc(t){ return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-document.getElementById('actionOverlay').addEventListener('click',function(e){if(e.target===this)closeAction();});
-document.getElementById('wakeOverlay').addEventListener('click',function(e){if(e.target===this)cancelWake();});
+document.getElementById('actionBg').addEventListener('click', e=>{ if(e.target===document.getElementById('actionBg')) closeAction(); });
+document.getElementById('wakeOverlay').addEventListener('click', e=>{ if(e.target===document.getElementById('wakeOverlay')) cancelWake(); });
 </script>
 </body>
 </html>
