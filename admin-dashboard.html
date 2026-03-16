@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#4f46e5">
+<meta name="description" content="ByteChief AI — Your intelligent AI assistant on the web. Chat, voice commands, and simulate phone actions.">
+<meta property="og:title" content="ByteChief AI">
+<meta property="og:description" content="Your intelligent AI assistant — chat, voice, and phone commands.">
+<meta property="og:image" content="/assets/og-image.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ByteChief AI">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/assets/icon-512.png">
+<title>ByteChief AI — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--surface:#080808;--card:#0d0d0d;--border:#1a1a1a;--text:#fff;--muted:#555;--primary:#4f46e5;--r:12px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;}
+nav{padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+.nav-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.95rem;text-decoration:none;color:var(--text);}
+.nav-logo img{height:24px;width:24px;border-radius:5px;object-fit:cover;}
+.admin-badge{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);border-radius:6px;padding:.2rem .7rem;font-size:.72rem;color:#c084fc;font-weight:700;}
+.nav-right{display:flex;gap:8px;}
+.nav-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.32rem .75rem;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:inherit;transition:.2s;}
+.nav-btn:hover{color:var(--text);}
+.nav-btn.danger{color:#ef4444;border-color:rgba(239,68,68,.2);}
+.nav-btn.danger:hover{background:rgba(239,68,68,.08);}
+.wrap{max-width:1200px;margin:0 auto;padding:24px;}
+.tabs{display:flex;gap:6px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.tab{padding:.42rem .95rem;border-radius:8px;font-size:.83rem;font-weight:600;cursor:pointer;color:var(--muted);border:none;background:none;font-family:inherit;transition:.2s;}
+.tab:hover{color:var(--text);}
+.tab.active{background:rgba(79,70,229,.15);color:#818cf8;border:1px solid rgba(79,70,229,.3);}
+.panel{display:none;}
+.panel.active{display:block;}
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;}
+.stat-card h4{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:8px;}
+.stat-card .num{font-size:2rem;font-weight:900;}
+.stat-card .num.blue{color:#818cf8;}
+.stat-card .num.green{color:#4ade80;}
+.stat-card .num.amber{color:#fbbf24;}
+.stat-card .num.red{color:#f87171;}
+/* Tables */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-head h2{font-size:1rem;font-weight:700;}
+.refresh-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.3rem .75rem;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:inherit;transition:.2s;}
+.refresh-btn:hover{color:var(--text);}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+table{width:100%;border-collapse:collapse;font-size:.83rem;}
+th{padding:10px 14px;text-align:left;color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);}
+td{padding:10px 14px;border-bottom:1px solid rgba(26,26,26,.6);color:#ccc;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+.badge{padding:.18rem .55rem;border-radius:4px;font-size:.7rem;font-weight:700;text-transform:uppercase;}
+.badge.user{background:rgba(79,70,229,.15);color:#818cf8;}
+.badge.admin{background:rgba(124,58,237,.15);color:#c084fc;}
+.del-btn{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;padding:.25rem .65rem;border-radius:6px;font-size:.75rem;cursor:pointer;font-family:inherit;transition:.2s;}
+.del-btn:hover{background:rgba(239,68,68,.2);}
+.empty{padding:32px;text-align:center;color:var(--muted);font-size:.88rem;}
+.loading{padding:24px;text-align:center;color:var(--muted);font-size:.85rem;}
+.toast-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:999;}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:.82rem;animation:toastIn .3s ease;}
+.toast.ok{border-color:rgba(34,197,94,.3);color:#4ade80;}
+.toast.err{border-color:rgba(239,68,68,.3);color:#f87171;}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+</style>
+</head>
+<body>
+<nav>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="/" class="nav-logo"><img src="assets/logo-dark.png" alt="">ByteChief AI</a>
+    <span class="admin-badge">🛡️ Admin</span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" onclick="loadAll()">⟳ Refresh</button>
+    <button class="nav-btn danger" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
+    <button class="tab" onclick="switchTab('users')">👥 Users</button>
+    <button class="tab" onclick="switchTab('logs')">📜 Chat Logs</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="panel active" id="panel-overview">
+    <div class="stats-grid">
+      <div class="stat-card"><h4>Total Users</h4><div class="num blue" id="stat-users">—</div></div>
+      <div class="stat-card"><h4>Total Commands</h4><div class="num green" id="stat-commands">—</div></div>
+      <div class="stat-card"><h4>Active Today</h4><div class="num amber" id="stat-active">—</div></div>
+      <div class="stat-card"><h4>Commands Today</h4><div class="num red" id="stat-recent">—</div></div>
+    </div>
+    <div class="section-head"><h2>Recent Chat Logs</h2><button class="refresh-btn" onclick="loadLogs()">⟳ Refresh</button></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>User</th><th>Command</th><th>Response</th><th>Time</th></tr></thead>
+        <tbody id="logsPreview"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="panel" id="panel-users">
+    <div class="section-head"><h2>All Users</h2><button class="refresh-btn" onclick="loadUsers()">⟳ Refresh</button></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead>
+        <tbody id="usersTable"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LOGS -->
+  <div class="panel" id="panel-logs">
+    <div class="section-head"><h2>All Chat Logs</h2><button class="refresh-btn" onclick="loadLogs()">⟳ Refresh</button></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>User</th><th>Command</th><th>Response</th><th>Model</th><th>Time</th></tr></thead>
+        <tbody id="logsTable"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+const token = localStorage.getItem('bc_admin_token');
+if (!token) window.location.href = 'admin-login.html';
+
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, ...(opts.headers || {}) },
+    ...opts,
+  });
+  if (res.status === 401 || res.status === 403) { logout(); return null; }
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Request failed'); }
+  return res.json();
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['overview','users','logs'][i] === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'users') loadUsers();
+  if (name === 'logs')  loadLogs();
+}
+
+async function loadAll() { await Promise.all([loadStats(), loadLogs()]); }
+
+async function loadStats() {
+  try {
+    const d = await api('/api/admin/stats');
+    if (!d) return;
+    document.getElementById('stat-users').textContent    = d.stats.totalUsers;
+    document.getElementById('stat-commands').textContent = d.stats.totalCommands;
+    document.getElementById('stat-active').textContent   = d.stats.activeUsers;
+    document.getElementById('stat-recent').textContent   = d.stats.recentCommands;
+  } catch { toast('Failed to load stats', 'err'); }
+}
+
+async function loadUsers() {
+  const tbody = document.getElementById('usersTable');
+  tbody.innerHTML = '<tr><td colspan="5" class="loading">Loading...</td></tr>';
+  try {
+    const d = await api('/api/admin/users');
+    if (!d) return;
+    if (!d.users?.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No users yet</td></tr>'; return; }
+    tbody.innerHTML = d.users.map(u => `
+      <tr>
+        <td>${esc(u.name || '—')}</td>
+        <td>${esc(u.email)}</td>
+        <td><span class="badge ${u.role}">${u.role}</span></td>
+        <td>${fmtDate(u.createdAt)}</td>
+        <td><button class="del-btn" onclick="deleteUser('${u._id || u.id}','${esc(u.email)}')">🗑 Delete</button></td>
+      </tr>`).join('');
+  } catch (e) { tbody.innerHTML = `<tr><td colspan="5" class="empty">${e.message}</td></tr>`; }
+}
+
+async function loadLogs() {
+  const preview = document.getElementById('logsPreview');
+  const full    = document.getElementById('logsTable');
+  if (preview) preview.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
+  if (full)    full.innerHTML    = '<tr><td colspan="5" class="loading">Loading...</td></tr>';
+  try {
+    const d = await api('/api/admin/logs');
+    if (!d) return;
+    const logs = d.logs || [];
+    if (!logs.length) {
+      if (preview) preview.innerHTML = '<tr><td colspan="4" class="empty">No logs yet</td></tr>';
+      if (full)    full.innerHTML    = '<tr><td colspan="5" class="empty">No logs yet</td></tr>';
+      return;
+    }
+    const rowFn = (log, cols) => {
+      const user = log.userName || log.userEmail || (log.userId?.email) || '—';
+      const cmd  = esc(log.command?.slice(0,60) || '—') + (log.command?.length > 60 ? '…' : '');
+      const res  = esc(log.response?.slice(0,80) || '—') + (log.response?.length > 80 ? '…' : '');
+      const time = fmtDate(log.createdAt);
+      if (cols === 4) return `<tr><td>${esc(user)}</td><td>${cmd}</td><td>${res}</td><td>${time}</td></tr>`;
+      return `<tr><td>${esc(user)}</td><td>${cmd}</td><td>${res}</td><td>${esc(log.model||'—')}</td><td>${time}</td></tr>`;
+    };
+    if (preview) preview.innerHTML = logs.slice(0,10).map(l => rowFn(l,4)).join('');
+    if (full)    full.innerHTML    = logs.map(l => rowFn(l,5)).join('');
+  } catch (e) {
+    if (preview) preview.innerHTML = `<tr><td colspan="4" class="empty">${e.message}</td></tr>`;
+    if (full)    full.innerHTML    = `<tr><td colspan="5" class="empty">${e.message}</td></tr>`;
+  }
+}
+
+async function deleteUser(id, email) {
+  if (!confirm(`Delete user ${email}? This will also delete all their chat logs.`)) return;
+  try {
+    await api(`/api/admin/users/${id}`, { method: 'DELETE' });
+    toast('User deleted ✓', 'ok');
+    loadUsers(); loadStats();
+  } catch (e) { toast('Failed: ' + e.message, 'err'); }
+}
+
+function logout() {
+  localStorage.removeItem('bc_admin_token');
+  window.location.href = 'admin-login.html';
+}
+
+function esc(t) { return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+function toast(msg, type='ok') {
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`; el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 3000);
+}
+
+// Boot
+document.addEventListener('DOMContentLoaded', loadAll);
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#4f46e5">
+<meta name="description" content="ByteChief AI — Your intelligent AI assistant on the web. Chat, voice commands, and simulate phone actions.">
+<meta property="og:title" content="ByteChief AI">
+<meta property="og:description" content="Your intelligent AI assistant — chat, voice, and phone commands.">
+<meta property="og:image" content="/assets/og-image.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ByteChief AI">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/assets/icon-512.png">
+<title>ByteChief AI — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--surface:#080808;--card:#0d0d0d;--border:#1a1a1a;--text:#fff;--muted:#555;--primary:#4f46e5;--r:12px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+.bg-g{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:80vw;height:80vw;background:radial-gradient(circle,rgba(79,70,229,.06)0%,transparent 60%);z-index:0;pointer-events:none;}
+.card{position:relative;z-index:1;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:44px 38px;width:100%;max-width:400px;}
+.card-head{text-align:center;margin-bottom:28px;}
+.shield{width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,rgba(79,70,229,.25),rgba(124,58,237,.15));border:1px solid rgba(79,70,229,.3);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 14px;}
+.card-head h1{font-size:1.55rem;font-weight:800;margin-bottom:5px;}
+.card-head p{color:var(--muted);font-size:.87rem;}
+.warning{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:.65rem 1rem;font-size:.78rem;color:#fbbf24;margin-bottom:20px;display:flex;align-items:center;gap:6px;}
+.err-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--r);padding:.65rem 1rem;font-size:.83rem;color:#f87171;margin-bottom:14px;display:none;}
+.err-box.show{display:block;}
+.form-group{margin-bottom:15px;}
+.form-label{display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:#ccc;}
+.form-input{width:100%;padding:.78rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:inherit;font-size:.92rem;transition:.2s;outline:none;}
+.form-input:focus{border-color:rgba(79,70,229,.6);box-shadow:0 0 0 3px rgba(79,70,229,.12);}
+.form-input::placeholder{color:var(--muted);}
+.btn-submit{width:100%;padding:.88rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:var(--r);font-family:inherit;font-size:.97rem;font-weight:700;cursor:pointer;transition:.2s;}
+.btn-submit:hover{opacity:.9;}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;}
+.back{display:block;text-align:center;margin-top:20px;color:var(--muted);font-size:.83rem;text-decoration:none;transition:.2s;}
+.back:hover{color:var(--text);}
+footer{position:fixed;bottom:0;left:0;right:0;text-align:center;padding:14px;font-size:.75rem;color:var(--muted);}
+footer a{color:var(--muted);text-decoration:none;}footer a:hover{color:var(--text);}
+</style>
+</head>
+<body>
+<div class="bg-g"></div>
+<div class="card">
+  <div class="card-head">
+    <div class="shield">🛡️</div>
+    <h1>Admin Access</h1>
+    <p>ByteChief AI Administration Panel</p>
+  </div>
+  <div class="warning">⚠️ Restricted access. All login attempts are logged.</div>
+  <div class="err-box" id="errBox"></div>
+  <form id="adminForm">
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input type="text" id="username" class="form-input" placeholder="obasanjosamuel404@gmail.com" required autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="password" class="form-input" placeholder="Admin password" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn-submit" id="submitBtn">🔐 Access Admin Panel</button>
+  </form>
+  <a href="/" class="back">← Back to main site</a>
+</div>
+<footer><a href="terms.html">Terms of Use</a> · ByteChief AI 2026</footer>
+
+<script>
+if (localStorage.getItem('bc_admin_token')) window.location.href = 'admin-dashboard.html';
+
+document.getElementById('adminForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const err = document.getElementById('errBox');
+  err.classList.remove('show');
+  btn.disabled = true; btn.textContent = '⏳ Verifying...';
+
+  try {
+    const res = await fetch('/api/auth/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value.trim(),
+        password: document.getElementById('password').value,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Login failed');
+    localStorage.setItem('bc_admin_token', data.token);
+    btn.textContent = '✅ Access Granted!';
+    setTimeout(() => window.location.href = 'admin-dashboard.html', 600);
+  } catch (e) {
+    err.textContent = '❌ ' + e.message;
+    err.classList.add('show');
+    btn.disabled = false; btn.textContent = '🔐 Access Admin Panel';
+    document.getElementById('password').value = '';
+    document.getElementById('adminForm').style.animation = 'shake .3s ease';
+    setTimeout(() => document.getElementById('adminForm').style.animation = '', 300);
+  }
+});
+</script>
+<style>@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}</style>
+</body>
+</html>

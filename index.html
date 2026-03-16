@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#4f46e5">
+<meta name="description" content="ByteChief AI — Your intelligent AI assistant on the web. Chat, voice commands, and simulate phone actions.">
+<meta property="og:title" content="ByteChief AI">
+<meta property="og:description" content="Your intelligent AI assistant — chat, voice, and phone commands.">
+<meta property="og:image" content="/assets/og-image.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ByteChief AI">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/assets/icon-512.png">
+<title>ByteChief AI — Your Intelligent Web Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--surface:#0a0a0a;--card:#0d0d0d;--border:#1a1a1a;--text:#fff;--muted:#666;--primary:#4f46e5;--primary2:#7c3aed;--r:14px;}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;overflow-x:hidden;}
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(79,70,229,.04)1px,transparent 1px),linear-gradient(90deg,rgba(79,70,229,.04)1px,transparent 1px);background-size:60px 60px;z-index:0;pointer-events:none;}
+.bg-g1{position:fixed;top:-20%;left:-10%;width:60vw;height:60vw;background:radial-gradient(circle,rgba(79,70,229,.1)0%,transparent 60%);z-index:0;pointer-events:none;}
+.bg-g2{position:fixed;bottom:-20%;right:-10%;width:50vw;height:50vw;background:radial-gradient(circle,rgba(124,58,237,.07)0%,transparent 60%);z-index:0;pointer-events:none;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5%;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.nav-logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:1.05rem;text-decoration:none;color:var(--text);}
+.nav-logo img{height:26px;width:26px;border-radius:6px;object-fit:cover;}
+.nav-links{display:flex;align-items:center;gap:6px;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.87rem;padding:.38rem .75rem;border-radius:8px;transition:.2s;}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,.05);}
+.btn-nav{background:var(--primary)!important;color:#fff!important;}
+.btn-nav:hover{background:#4338ca!important;}
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 5% 60px;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(79,70,229,.12);border:1px solid rgba(79,70,229,.35);border-radius:50px;padding:.38rem .95rem;font-size:.78rem;color:#a5b4fc;margin-bottom:26px;animation:fadeUp .8s ease forwards;}
+.dot-live{width:6px;height:6px;background:#4f46e5;border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.5);}}
+.hero h1{font-size:clamp(2.6rem,8vw,5.2rem);font-weight:900;line-height:1.06;margin-bottom:22px;animation:fadeUp .9s .1s ease both;}
+.grad{background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:clamp(.95rem,2.5vw,1.2rem);color:var(--muted);max-width:540px;line-height:1.75;margin-bottom:40px;animation:fadeUp .9s .2s ease both;}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;animation:fadeUp .9s .3s ease both;}
+.btn-p{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;padding:.88rem 2rem;border-radius:12px;text-decoration:none;font-weight:700;font-size:.97rem;transition:.25s;display:inline-flex;align-items:center;gap:8px;}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,70,229,.4);}
+.btn-o{background:transparent;color:var(--text);padding:.88rem 2rem;border-radius:12px;text-decoration:none;font-weight:600;font-size:.97rem;border:1.5px solid var(--border);transition:.25s;display:inline-flex;align-items:center;gap:8px;}
+.btn-o:hover{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.04);}
+.hero-logo-wrap{position:relative;margin-bottom:32px;animation:fadeUp .8s ease both;}
+.hero-logo{width:88px;height:88px;border-radius:22px;object-fit:cover;box-shadow:0 0 60px rgba(79,70,229,.3);}
+.logo-ring{position:absolute;inset:-12px;border:1px solid rgba(79,70,229,.25);border-radius:34px;animation:ringPulse 3s ease-in-out infinite;}
+@keyframes ringPulse{0%,100%{opacity:.3;transform:scale(1);}50%{opacity:.7;transform:scale(1.04);}}
+.stats{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-top:56px;animation:fadeUp .9s .45s ease both;}
+.stat{text-align:center;}
+.stat-n{font-size:1.75rem;font-weight:900;}
+.stat-n span{background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.stat-l{font-size:.75rem;color:var(--muted);margin-top:3px;}
+.section{position:relative;z-index:1;padding:90px 5%;}
+.sec-label{text-align:center;font-size:.75rem;color:#818cf8;text-transform:uppercase;letter-spacing:4px;margin-bottom:14px;font-weight:600;}
+.sec-title{text-align:center;font-size:clamp(1.7rem,4vw,2.6rem);font-weight:800;margin-bottom:14px;}
+.sec-sub{text-align:center;color:var(--muted);font-size:.95rem;max-width:500px;margin:0 auto 52px;}
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px;max-width:1100px;margin:0 auto;}
+.feat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:26px;transition:.3s;}
+.feat:hover{border-color:rgba(79,70,229,.35);transform:translateY(-4px);box-shadow:0 12px 40px rgba(79,70,229,.08);}
+.feat-ico{width:46px;height:46px;border-radius:12px;background:rgba(79,70,229,.12);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:14px;}
+.feat h3{font-size:1rem;font-weight:700;margin-bottom:7px;}
+.feat p{color:var(--muted);font-size:.86rem;line-height:1.6;}
+.cta-section{position:relative;z-index:1;padding:80px 5%;text-align:center;}
+.cta-card{background:linear-gradient(135deg,rgba(79,70,229,.12),rgba(124,58,237,.08));border:1px solid rgba(79,70,229,.25);border-radius:20px;padding:56px 40px;max-width:640px;margin:0 auto;}
+.cta-card h2{font-size:2rem;font-weight:800;margin-bottom:10px;}
+.cta-card p{color:var(--muted);margin-bottom:32px;}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:9px;padding:.82rem 1.6rem;border-radius:10px;background:rgba(255,255,255,.05);border:1.5px solid var(--border);color:var(--muted);font-size:.88rem;font-weight:500;cursor:not-allowed;position:relative;}
+.google-btn .tag{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(79,70,229,.2);color:#818cf8;font-size:.6rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;text-transform:uppercase;}
+.email-btn{display:flex;align-items:center;justify-content:center;gap:9px;padding:.82rem 1.6rem;border-radius:10px;background:var(--primary);color:#fff;font-size:.88rem;font-weight:700;text-decoration:none;transition:.2s;}
+.email-btn:hover{background:#4338ca;}
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:32px 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+.f-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.9rem;}
+.f-logo img{height:20px;width:20px;border-radius:4px;object-fit:cover;}
+footer p{color:var(--muted);font-size:.78rem;}
+footer a{color:var(--muted);text-decoration:none;font-size:.78rem;transition:.2s;}
+footer a:hover{color:var(--text);}
+.f-links{display:flex;gap:18px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+@media(max-width:640px){.hero h1{font-size:2.4rem;}.hero-btns,.cta-btns{flex-direction:column;align-items:center;}.stats{gap:20px;}.hide-mob{display:none;}.cta-card{padding:32px 20px;}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div><div class="bg-g1"></div><div class="bg-g2"></div>
+<nav>
+  <a href="/" class="nav-logo"><img src="assets/logo-dark.png" alt="">ByteChief AI</a>
+  <div class="nav-links">
+    <a href="about.html" class="hide-mob">About</a>
+    <a href="terms.html" class="hide-mob">Terms</a>
+    <a href="login.html">Login</a>
+    <a href="signup.html" class="btn-nav">Get Started</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-logo-wrap">
+    <div class="logo-ring"></div>
+    <img src="assets/logo-dark.png" alt="ByteChief AI" class="hero-logo">
+  </div>
+  <div class="hero-badge"><div class="dot-live"></div> Powered by Groq · llama-3.3-70b</div>
+  <h1>Meet <span class="grad">ByteChief AI</span><br>Your Web Assistant</h1>
+  <p class="hero-sub">Chat with AI, run voice commands, and simulate phone actions — all from your browser. Fast, smart, and always on.</p>
+  <div class="hero-btns">
+    <a href="signup.html" class="btn-p">🚀 Get Started Free</a>
+    <a href="dashboard.html" class="btn-o">💬 Open Chat</a>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-n"><span>∞</span></div><div class="stat-l">AI Responses</div></div>
+    <div class="stat"><div class="stat-n"><span>3</span></div><div class="stat-l">Command Types</div></div>
+    <div class="stat"><div class="stat-n"><span>Fast</span></div><div class="stat-l">Groq Inference</div></div>
+    <div class="stat"><div class="stat-n"><span>24/7</span></div><div class="stat-l">Always Available</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="sec-label">Features</div>
+  <h2 class="sec-title">Everything You Need in One AI</h2>
+  <p class="sec-sub">From smart chat to voice commands — ByteChief AI is your all-in-one web assistant.</p>
+  <div class="feats">
+    <div class="feat"><div class="feat-ico">💬</div><h3>Smart Chat</h3><p>Ask anything — coding, writing, math, research. Powered by Groq's ultra-fast llama-3.3-70b model.</p></div>
+    <div class="feat"><div class="feat-ico">🎙️</div><h3>Voice Commands</h3><p>Speak your commands with your mic. Web Speech API converts your voice to text instantly.</p></div>
+    <div class="feat"><div class="feat-ico">📞</div><h3>Phone Commands</h3><p>Simulate calls, SMS and app launches. Type "call John" or "send SMS to Mum" to try it.</p></div>
+    <div class="feat"><div class="feat-ico">📜</div><h3>Chat History</h3><p>All conversations stored securely in MongoDB Atlas. Review and download your history anytime.</p></div>
+    <div class="feat"><div class="feat-ico">🔐</div><h3>Secure Auth</h3><p>JWT-based sessions keep your account safe. Email sign-up with Google OAuth coming soon.</p></div>
+    <div class="feat"><div class="feat-ico">🛡️</div><h3>Admin Panel</h3><p>Full dashboard to manage users, view chat logs, and monitor activity in real-time.</p></div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="cta-card">
+    <h2>Start for Free</h2>
+    <p>Create your account and chat with ByteChief AI in seconds</p>
+    <div class="cta-btns">
+      <div class="google-btn">
+        <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google <span class="tag">Soon</span>
+      </div>
+      <a href="signup.html" class="email-btn">✉️ Sign Up with Email</a>
+    </div>
+    <p style="margin-top:16px;font-size:.83rem;color:var(--muted);">Already have an account? <a href="login.html" style="color:#818cf8;text-decoration:none;">Log in →</a></p>
+  </div>
+</section>
+
+<footer>
+  <div class="f-logo"><img src="assets/logo-dark.png" alt="">ByteChief AI</div>
+  <p>Built by Obasanjo Samuel · Tribal Chief Tech · 2026</p>
+  <div class="f-links"><a href="about.html">About</a><a href="terms.html">Terms</a><a href="admin-login.html">Admin</a></div>
+</footer>
+</body>
+</html>
