@@ -605,98 +605,147 @@ async function send(){
 }
 
 /* ── Render ── */
-function addMsg(type,text,imgUrl=null){
-  const row=document.createElement('div');
-  row.className=`mr ${type}`;
-  const av=document.createElement('div');
-  av.className=`av ${type==='in'?'ai':'usr'}`;
-  av.innerHTML=`<span class="mi">${type==='in'?'bolt':'person'}</span>`;
-  const col=document.createElement('div');
-  const b=document.createElement('div');
-  b.className='bbl';
-  b.innerHTML=fmt(text);
+function addMsg(type, text, imgUrl=null){
+  const row = document.createElement('div');
+  row.className = `mr ${type}`;
+
+  const av = document.createElement('div');
+  av.className = `av ${type==='in'?'ai':'usr'}`;
+  av.innerHTML = `<span class="mi">${type==='in'?'bolt':'person'}</span>`;
+
+  const col = document.createElement('div');
+  col.style.minWidth = '0';
+  col.style.overflow = 'hidden';
+
+  const b = document.createElement('div');
+  b.className = 'bbl';
+  // Use createContextualFragment via a template to safely render our sanitized HTML
+  b.innerHTML = fmt(text);
+
   if(imgUrl){
-    const iw=document.createElement('div');iw.className='iw';
-    iw.innerHTML='<div class="il"><span class="mi">image</span><span>Generating image...</span></div>';
-    const img=new Image();
-    img.onload=()=>{iw.innerHTML='';img.style.cssText='max-width:100%;border-radius:10px;display:block;margin-top:6px;';iw.appendChild(img);};
-    img.onerror=()=>{iw.innerHTML='<div style="color:var(--re);font-size:.78rem;margin-top:6px">Image failed to load</div>';};
-    img.src=imgUrl;b.appendChild(iw);
+    const iw = document.createElement('div');
+    iw.className = 'iw';
+    iw.innerHTML = '<div class="il"><span class="mi">image</span><span>Generating image...</span></div>';
+    const img = new Image();
+    img.onload  = () => { iw.innerHTML=''; img.style.cssText='max-width:100%;border-radius:10px;display:block;margin-top:6px;'; iw.appendChild(img); };
+    img.onerror = () => { iw.innerHTML='<div style="color:var(--re);font-size:.78rem;margin-top:6px">Image failed to load</div>'; };
+    img.src = imgUrl;
+    b.appendChild(iw);
   }
+
+  col.appendChild(b);
+
   if(type==='in'){
-    const ma=document.createElement('div');ma.className='ma';
-    ma.innerHTML=`
-      <button class="mab" onclick="speak(${JSON.stringify(text)})"><span class="mi">volume_up</span></button>
-      <button class="mab" onclick="cp(${JSON.stringify(text)})"><span class="mi">content_copy</span></button>`;
-    col.appendChild(b);col.appendChild(ma);
-  }else{col.appendChild(b);}
-  if(type==='in'){row.appendChild(av);row.appendChild(col);}
-  else{row.appendChild(col);row.appendChild(av);}
+    const ma = document.createElement('div');
+    ma.className = 'ma';
+    // Speak button
+    const spk = document.createElement('button');
+    spk.className = 'mab';
+    spk.innerHTML = '<span class="mi">volume_up</span>';
+    spk.onclick = () => speak(text);
+    // Copy button
+    const cpb = document.createElement('button');
+    cpb.className = 'mab';
+    cpb.innerHTML = '<span class="mi">content_copy</span>';
+    cpb.onclick = () => cp(text);
+    ma.appendChild(spk);
+    ma.appendChild(cpb);
+    col.appendChild(ma);
+  }
+
+  if(type==='in'){ row.appendChild(av); row.appendChild(col); }
+  else           { row.appendChild(col); row.appendChild(av); }
+
   document.getElementById('msgs').appendChild(row);
-  row.scrollIntoView({behavior:'smooth',block:'end'});
+  row.scrollIntoView({behavior:'smooth', block:'end'});
 }
 
-function fmt(t) {
-  // Normalize literal \n strings from AI
-  let s = String(t).replace(/\\n/g, '\n');
+/* ── Text formatter — safe markdown to HTML ── */
+function fmt(raw) {
+  // Step 1: Normalise literal \n escape sequences from AI
+  let s = String(raw).replace(/\\n/g, '\n');
 
-  // Extract code blocks BEFORE escaping
-  const codeBlocks = [];
-  s = s.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-    const idx = codeBlocks.length;
-    codeBlocks.push({ lang: esc(lang), code: esc(code) });
-    return `\x00CODE${idx}\x00`;
+  // Step 2: Pull out code blocks FIRST (before any escaping) so HTML inside them is shown as text
+  const blocks = [];
+  s = s.replace(/```(\w*)\r?\n?([\s\S]*?)```/g, (_, lang, code) => {
+    blocks.push({ lang: lang.trim(), code: code });
+    return `\x00BLOCK${blocks.length-1}\x00`;
   });
 
-  // Extract inline code before escaping
-  const inlineCodes = [];
-  s = s.replace(/`([^`\n]+)`/g, (_, code) => {
-    const idx = inlineCodes.length;
-    inlineCodes.push(esc(code));
-    return `\x00INLINE${idx}\x00`;
+  // Step 3: Pull out inline code
+  const inlines = [];
+  s = s.replace(/`([^`\r\n]+)`/g, (_, code) => {
+    inlines.push(code);
+    return `\x00INLINE${inlines.length-1}\x00`;
   });
 
-  // Escape remaining HTML
-  s = esc(s);
+  // Step 4: HTML-escape everything that remains (kills any rogue HTML from AI)
+  s = he(s);
 
-  // Headings: ###, ##, #
-  s = s.replace(/^### (.+)$/gm, '<div style="font-size:.92rem;font-weight:700;color:var(--ac2);margin:10px 0 4px">$1</div>');
-  s = s.replace(/^## (.+)$/gm,  '<div style="font-size:.98rem;font-weight:700;color:var(--tx);margin:12px 0 5px">$1</div>');
-  s = s.replace(/^# (.+)$/gm,   '<div style="font-size:1.05rem;font-weight:800;color:var(--tx);margin:14px 0 6px">$1</div>');
+  // Step 5: Markdown formatting on escaped text
+  // Headings (must run before <br> conversion)
+  s = s.replace(/^### (.+)$/gm, '<b style="display:block;font-size:.88rem;color:var(--ac2);margin:10px 0 3px">$1</b>');
+  s = s.replace(/^## (.+)$/gm,  '<b style="display:block;font-size:.94rem;color:var(--tx);margin:11px 0 4px">$1</b>');
+  s = s.replace(/^# (.+)$/gm,   '<b style="display:block;font-size:1rem;color:var(--tx);margin:12px 0 5px">$1</b>');
+  // Bold / italic
+  s = s.replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>');
+  s = s.replace(/\*(.+?)\*/gs,     '<em>$1</em>');
+  // Newlines → <br>
+  s = s.replace(/\n/g, '<br>');
 
-  // Bold, italic, newlines
-  s = s
-    .replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/gs, '<em>$1</em>')
-    .replace(/\n/g, '<br>');
-
-  // Restore code blocks with language label and copy button
-  codeBlocks.forEach(({ lang, code }, i) => {
-    const label = lang ? `<span style="color:var(--mu2);font-size:.65rem;text-transform:uppercase;letter-spacing:.06em">${lang}</span>` : '';
-    const copy  = `<button onclick="cp(decodeURIComponent('${encodeURIComponent(code.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/&quot;/g,'"'))}'))" style="background:rgba(255,255,255,.06);border:1px solid var(--bd2);border-radius:5px;color:var(--mu2);font-size:.68rem;padding:2px 8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:3px"><span class="mi" style="font-size:12px">content_copy</span>Copy</button>`;
-    s = s.replace(`\x00CODE${i}\x00`,
-      `<div style="margin:8px 0;border-radius:9px;overflow:hidden;border:1px solid var(--bd2)">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:#0a0a14;border-bottom:1px solid var(--bd2)">${label}${copy}</div>
-        <pre style="background:#0a0a14;padding:12px;overflow-x:auto;margin:0;-webkit-overflow-scrolling:touch"><code style="font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.55;color:#e2e8f0;white-space:pre">${code}</code></pre>
-      </div>`
+  // Step 6: Restore inline code (content HTML-escaped)
+  inlines.forEach((code, i) => {
+    s = s.replace(`\x00INLINE${i}\x00`,
+      `<code style="font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,.35);border-radius:4px;padding:1px 5px;font-size:.8rem">${he(code)}</code>`
     );
   });
 
-  // Restore inline code
-  inlineCodes.forEach((code, i) => {
-    s = s.replace(`\x00INLINE${i}\x00`, `<code style="font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,.35);border-radius:4px;padding:1px 5px;font-size:.82rem">${code}</code>`);
+  // Step 7: Restore code blocks (content HTML-escaped, copy stores decoded text)
+  blocks.forEach(({ lang, code }, i) => {
+    const escaped = he(code);
+    const labelHtml = lang
+      ? `<span style="color:var(--mu2);font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">${he(lang)}</span>`
+      : '<span></span>';
+    // Store raw code on the button via data attribute to avoid injection in onclick
+    const blockId = `blk-${i}-${Date.now()}`;
+    s = s.replace(`\x00BLOCK${i}\x00`,
+      `<div style="margin:8px 0;border-radius:9px;overflow:hidden;border:1px solid var(--bd2)">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:#080810;border-bottom:1px solid var(--bd2)">
+          ${labelHtml}
+          <button id="${blockId}" class="mab" style="font-size:.68rem;padding:3px 8px;border:1px solid var(--bd2);border-radius:5px;background:rgba(255,255,255,.05)">
+            <span class="mi" style="font-size:12px">content_copy</span> Copy
+          </button>
+        </div>
+        <pre style="background:#080810;padding:12px;overflow-x:auto;margin:0;-webkit-overflow-scrolling:touch"><code style="font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.55;color:#e2e8f0;white-space:pre">${escaped}</code></pre>
+      </div>`
+    );
+    // Attach copy handler via DOM after insertion (safe - no inline onclick with user data)
+    requestAnimationFrame(() => {
+      const btn = document.getElementById(blockId);
+      if (btn) btn.onclick = () => cp(code);
+    });
   });
 
   return s;
 }
-function esc(s) {
+
+/* ── HTML escape (the ONLY escaping function) ── */
+function he(s) {
   return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
-function cp(t){navigator.clipboard?.writeText(t).then(()=>toast('Copied!','ok'));}
+/* Keep esc as alias */
+const esc = he;
+
+function cp(t) {
+  navigator.clipboard?.writeText(t)
+    .then(() => toast('Copied!','ok'))
+    .catch(() => toast('Copy failed','err'));
+}
 
 /* ── Typing ── */
 function showTyping(){
