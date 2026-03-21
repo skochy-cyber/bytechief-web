@@ -380,6 +380,25 @@ app.get('/api/admin/logs', authMw, adminMw, async (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     status:   'ok',
-    ai:       groq    ? 'groq-connected'  : 'mock-mode',
-    database: MONGO_URI ? 'mongodb-atlas' : 'in-memory',
-    uptime:   Math.floor(process
+    ai:       groq     ? 'groq-connected'  : 'mock-mode',
+    database: MONGO_URI ? 'mongodb-atlas'  : 'in-memory',
+    uptime:   Math.floor(process.uptime()),
+    version:  '1.0.0',
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 404 FALLBACK
+// ══════════════════════════════════════════════════════════════════════════════
+
+app.use('/api/', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
+
+// ── Start server ───────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`\n⚡ ByteChief AI Server`);
+  console.log(`🌐  http://localhost:${PORT}`);
+  console.log(`🤖  AI: ${groq ? 'Groq connected' : 'Mock mode (no GROQ_API_KEY)'}`);
+  console.log(`🗄️   DB: ${MONGO_URI ? 'MongoDB Atlas' : 'In-memory (no MONGO_URI)'}\n`);
+});
