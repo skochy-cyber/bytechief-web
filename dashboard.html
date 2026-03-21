@@ -437,12 +437,12 @@ function logout() {
   ['bc_token','bc_user','bc_remember'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);});
   location.href='login.html';
 }
-const TOKEN = getToken();
-if (!TOKEN) location.replace('login.html');
+if (!getToken()) location.replace('login.html');
 
 /* ── State ── */
 let hist=[],tts=localStorage.getItem('bc_tts')==='1',busy=false;
 let mem={contacts:{},preferences:{},facts:[],name:''};
+let _blkId=0; // FIX #3: global counter for code block IDs
 const perms={mic:false,cam:false,loc:false};
 
 /* ── Init ── */
@@ -456,7 +456,7 @@ async function init(){
   }catch{}
   updTTS();
   try{
-    const r=await fetch('/api/memory',{headers:{Authorization:'Bearer '+TOKEN}});
+    const r=await fetch('/api/memory',{headers:{Authorization:'Bearer '+getToken()}});
     if(r.ok){
       const d=await r.json();
       mem.name=d.name||mem.name;
@@ -492,7 +492,7 @@ function renderMem(){
 }
 async function saveMem(){
   try{
-    await fetch('/api/memory',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},
+    await fetch('/api/memory',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
       body:JSON.stringify({contacts:mem.contacts,preferences:mem.preferences,facts:mem.facts})});
     renderMem();
   }catch{}
@@ -586,8 +586,10 @@ async function send(){
   showTyping();
   try{
     hist.push({role:'user',content:txt});
+    // FIX #2: trim history to prevent memory leak
+    if(hist.length>40) hist=hist.slice(-40);
     const r=await fetch('/api/chat',{method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+getToken()},
       body:JSON.stringify({message:txt,history:hist.slice(-12),memory:mem})});
     removeTyping();
     if(r.status===401){logout();return;}
@@ -707,7 +709,7 @@ function fmt(raw) {
       ? `<span style="color:var(--mu2);font-size:.65rem;text-transform:uppercase;letter-spacing:.05em">${he(lang)}</span>`
       : '<span></span>';
     // Store raw code on the button via data attribute to avoid injection in onclick
-    const blockId = `blk-${i}-${Date.now()}`;
+    const blockId = `blk-${_blkId++}`;
     s = s.replace(`\x00BLOCK${i}\x00`,
       `<div style="margin:8px 0;border-radius:9px;overflow:hidden;border:1px solid var(--bd2)">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:#080810;border-bottom:1px solid var(--bd2)">
@@ -786,10 +788,12 @@ try{
 }catch{}
 
 async function toggleVoice(){
-  if(!voice){toast('Voice not supported','err');return;}
+  if(!voice){toast('Voice not supported in this browser','err');return;}
   if(!perms.mic){const ok=await reqMic();if(!ok)return;}
   voice.toggle();
 }
+// Handle voice unsupported event from VoiceManager
+window.addEventListener('voiceUnsupported',()=>toast('Voice not supported — try Chrome or Edge','err'));
 
 /* ── Helpers ── */
 function qc(t){
