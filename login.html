@@ -104,7 +104,7 @@ function getToken() {
   const token = getToken();
   if (!token) return;
   try {
-    const r = await fetch('/api/auth/verify', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/me', { headers: { Authorization: 'Bearer ' + token } });
     if (r.ok) {
       // Valid session — sync to sessionStorage if only in localStorage
       sessionStorage.setItem('bc_token', token);
@@ -124,7 +124,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   err.classList.remove('show');
   btn.disabled = true; btn.textContent = '⏳ Logging in...';
   try {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
