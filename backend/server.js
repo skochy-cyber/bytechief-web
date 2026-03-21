@@ -1,5 +1,5 @@
 /**
- * ByteChief AI — Backend Server v2.0 (Render-ready)
+ * ByteChief AI — Backend Server v2.1 (Render-ready)
  * Node.js + Express + MongoDB Atlas + Groq AI + Pollinations Image Gen
  * Author: Obasanjo Samuel — Tribal Chief Tech
  */
@@ -19,15 +19,17 @@ const PORT       = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'bytechief-dev-secret-change-in-prod';
 const GROQ_KEY   = process.env.GROQ_API_KEY;
 const MONGO_URI  = process.env.MONGO_URI;
-const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'changeme-in-env';
+const ADMIN_USER = process.env.ADMIN_USERNAME || 'obasanjosamuel404';
+const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'Obasanjo444@@';
+const ADMIN_EMAIL_ENV = process.env.ADMIN_EMAIL || 'obasanjosamuel404@gmail.com';
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
 
 app.set('trust proxy', 1);
 
-// ── Groq ───────────────────────────────────────────────────────────────────────
+// ── Groq ────────────────────────────────────────────────────────────────────
 const groq = GROQ_KEY ? new Groq({ apiKey: GROQ_KEY }) : null;
 
-// ── MongoDB ────────────────────────────────────────────────────────────────────
+// ── MongoDB ──────────────────────────────────────────────────────────────────
 if (MONGO_URI) {
   mongoose.connect(MONGO_URI)
     .then(async () => { console.log('✅ MongoDB connected'); await seedAdmin(); })
@@ -36,7 +38,8 @@ if (MONGO_URI) {
   console.warn('⚠️  No MONGO_URI — using in-memory storage');
 }
 
-// ── Schemas ────────────────────────────────────────────────────────────────────
+// ── Schemas ──────────────────────────────────────────────────────────────────
+// FIX #1: Use Object instead of Map — Map breaks Object.keys() and JSON serialization
 const UserSchema = new mongoose.Schema({
   email:      { type: String, required: true, unique: true, lowercase: true, trim: true },
   name:       { type: String, default: '' },
@@ -46,8 +49,8 @@ const UserSchema = new mongoose.Schema({
   inviteCode: { type: String, default: '' },
   lastActive: { type: Date, default: Date.now },
   memory: {
-    contacts:    { type: Map, of: String, default: {} },
-    preferences: { type: Map, of: String, default: {} },
+    contacts:    { type: Object, default: {} },
+    preferences: { type: Object, default: {} },
     facts:       [{ type: String }],
   },
 }, { timestamps: true });
@@ -74,34 +77,40 @@ const User    = mongoose.models.BCUser   || mongoose.model('BCUser',   UserSchem
 const Invite  = mongoose.models.BCInvite || mongoose.model('BCInvite', InviteSchema);
 const ChatLog = mongoose.models.BCLog    || mongoose.model('BCLog',    LogSchema);
 
-// ── In-memory fallback ─────────────────────────────────────────────────────────
+// ── In-memory fallback ───────────────────────────────────────────────────────
 const memUsers = [], memInvites = [], memLogs = [];
 let memIdSeq = 1;
 
-// ── Seed admin ─────────────────────────────────────────────────────────────────
+// ── Seed admin ───────────────────────────────────────────────────────────────
 async function seedAdmin() {
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || `${ADMIN_USER}@bytechief.ai`;
-    const existing   = await User.findOne({ email: adminEmail });
+    const existing = await User.findOne({ email: ADMIN_EMAIL_ENV });
     if (!existing) {
       await User.create({
-        email: adminEmail, name: 'ByteChief Admin',
+        email:    ADMIN_EMAIL_ENV,
+        name:     'ByteChief Admin',
         password: await bcrypt.hash(ADMIN_PASS, 10),
-        role: 'admin', isInvited: true,
+        role:     'admin',
+        isInvited: true,
       });
-      console.log(`✅ Admin seeded → ${adminEmail}`);
+      console.log(`✅ Admin seeded → ${ADMIN_EMAIL_ENV}`);
     }
   } catch (e) { console.warn('Admin seed skipped:', e.message); }
 }
 
-// ── Middleware ─────────────────────────────────────────────────────────────────
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+// ── Middleware ───────────────────────────────────────────────────────────────
+// FIX #5: Restrict CORS to allowed origin
+app.use(cors({
+  origin: ALLOWED_ORIGIN === '*' ? '*' : ALLOWED_ORIGIN,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+}));
+app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..')));
 
 const apiLimiter = rateLimit({ windowMs: 15*60*1000, max: 200, message: { error: 'Too many requests' } });
-const chatLimit  = rateLimit({ windowMs:  1*60*1000, max:  30, message: { error: 'Slow down — too many messages' } });
+const chatLimit  = rateLimit({ windowMs:  1*60*1000, max:  20, message: { error: 'Slow down — too many messages' } });
 app.use('/api/', apiLimiter);
 
 const authMw = (req, res, next) => {
@@ -124,11 +133,11 @@ function makeToken(user) {
 // AUTH ROUTES
 // ══════════════════════════════════════════════════════════════════════════════
 
-// POST /api/register — requires invite code
 app.post('/api/register', async (req, res) => {
   const { email, name, password, inviteCode } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   if (!inviteCode)         return res.status(400).json({ error: 'Invite code required' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
   try {
     if (MONGO_URI) {
       const invite = await Invite.findOne({ code: inviteCode.trim().toUpperCase(), used: false });
@@ -155,7 +164,6 @@ app.post('/api/register', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Registration failed' }); }
 });
 
-// POST /api/login
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
@@ -170,23 +178,32 @@ app.post('/api/login', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Login failed' }); }
 });
 
-// POST /api/admin/login
+// Admin login — accepts username OR email
 app.post('/api/admin/login', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
   try {
-    const adminEmail = process.env.ADMIN_EMAIL || `${ADMIN_USER}@bytechief.ai`;
-    const user = MONGO_URI
-      ? await User.findOne({ email: adminEmail, role: 'admin' })
-      : memUsers.find(u => u.role === 'admin');
+    let user;
+    if (MONGO_URI) {
+      // Accept login with email OR admin username
+      user = await User.findOne({
+        $or: [
+          { email: ADMIN_EMAIL_ENV, role: 'admin' },
+          { email: username.toLowerCase(), role: 'admin' },
+        ]
+      });
+    } else {
+      user = memUsers.find(u => u.role === 'admin');
+    }
     if (!user) return res.status(401).json({ error: 'Admin not found' });
-    if (username !== ADMIN_USER) return res.status(401).json({ error: 'Invalid credentials' });
+    // Accept username match OR email match
+    const usernameMatch = username === ADMIN_USER || username === ADMIN_EMAIL_ENV || username === user.email;
+    if (!usernameMatch) return res.status(401).json({ error: 'Invalid credentials' });
     if (!(await bcrypt.compare(password, user.password))) return res.status(401).json({ error: 'Invalid credentials' });
     res.json({ token: makeToken(user), user: { id: user._id || user.id, email: user.email, name: user.name, role: user.role } });
   } catch (e) { res.status(500).json({ error: 'Admin login failed' }); }
 });
 
-// GET /api/me
 app.get('/api/me', authMw, async (req, res) => {
   try {
     const user = MONGO_URI
@@ -197,6 +214,13 @@ app.get('/api/me', authMw, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
+// FIX #8: Forgot password route
+app.post('/api/forgot-password', async (req, res) => {
+  // For now just return success — full email reset requires email service config
+  // The admin can reset manually via admin dashboard
+  res.json({ message: 'If that email exists, contact your admin to reset your password.' });
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
 // MEMORY ROUTES
 // ══════════════════════════════════════════════════════════════════════════════
@@ -205,7 +229,16 @@ app.get('/api/memory', authMw, async (req, res) => {
   try {
     if (MONGO_URI) {
       const user = await User.findById(req.user.id).select('memory name');
-      return res.json({ memory: user?.memory || {}, name: user?.name || '' });
+      // FIX #1: Ensure plain objects returned (not Mongoose Map objects)
+      const memory = user?.memory?.toObject ? user.memory.toObject() : (user?.memory || {});
+      return res.json({
+        name:   user?.name || '',
+        memory: {
+          contacts:    memory.contacts    || {},
+          preferences: memory.preferences || {},
+          facts:       memory.facts       || [],
+        }
+      });
     }
     const u = memUsers.find(u => u.id === req.user.id);
     res.json({ memory: u?.memory || {}, name: u?.name || '' });
@@ -215,6 +248,25 @@ app.get('/api/memory', authMw, async (req, res) => {
 app.put('/api/memory', authMw, async (req, res) => {
   try {
     const { contacts, preferences, facts } = req.body;
+
+    // FIX #4: Validate memory input size
+    if (contacts && Object.keys(contacts).length > 100)
+      return res.status(400).json({ error: 'Too many contacts (max 100)' });
+    if (facts && facts.length > 30)
+      return res.status(400).json({ error: 'Too many facts (max 30)' });
+    // Validate string lengths
+    if (contacts) {
+      for (const [k, v] of Object.entries(contacts)) {
+        if (String(k).length > 100 || String(v).length > 200)
+          return res.status(400).json({ error: 'Contact name/number too long' });
+      }
+    }
+    if (facts) {
+      for (const f of facts) {
+        if (String(f).length > 300) return res.status(400).json({ error: 'Fact too long (max 300 chars)' });
+      }
+    }
+
     if (MONGO_URI) {
       const update = {};
       if (contacts)    update['memory.contacts']    = contacts;
@@ -267,12 +319,12 @@ YOUR CAPABILITIES:
 MEMORY — you have the user's saved information:
 - Use their name naturally in conversation when known
 - Reference saved contacts, preferences, and facts when relevant
-- When user says "remember that...", "my [x] is...", "save this...", acknowledge you'll store it and respond normally
+- When user says "remember that...", "my [x] is...", "save this...", acknowledge you'll store it
 
-COMMAND SHORTCUTS — when user says these commands, just confirm naturally:
-- "call [name]" → say "📞 Calling [name] now!"
-- "open [app]" → say "🚀 Opening [app]!"
-- "text [name]" → say "💬 Sending message to [name]!"
+COMMAND SHORTCUTS — when user says these, confirm naturally:
+- "call [name]" → say "Calling [name] now!"
+- "open [app]" → say "Opening [app]!"
+- "text [name]" → say "Sending message to [name]!"
 
 RULES:
 - Be helpful, real, and direct
@@ -284,6 +336,7 @@ RULES:
 app.post('/api/chat', authMw, chatLimit, async (req, res) => {
   const { message, history = [], memory = {} } = req.body;
   if (!message) return res.status(400).json({ error: 'Message required' });
+  if (String(message).length > 4000) return res.status(400).json({ error: 'Message too long' });
 
   try {
     let reply;
@@ -301,7 +354,7 @@ app.post('/api/chat', authMw, chatLimit, async (req, res) => {
         model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT + (memCtx ? `\n\nUSER MEMORY:${memCtx}` : '') },
-          ...history.slice(-12).map(h => ({ role: h.role, content: h.content })),
+          ...history.slice(-12).map(h => ({ role: h.role, content: String(h.content).slice(0, 2000) })),
           { role: 'user', content: message },
         ],
         max_tokens: 1024,
@@ -312,14 +365,14 @@ app.post('/api/chat', authMw, chatLimit, async (req, res) => {
       reply = `[Mock mode — no GROQ_API_KEY set] You said: "${message}"`;
     }
 
-    // Check for image generation trigger
+    // Image generation trigger
     let imageUrl = null;
     const imgMatch = reply.match(/\[IMAGE:\s*(.+?)\]/i);
     if (imgMatch) {
       const prompt = encodeURIComponent(imgMatch[1].trim());
       imageUrl = `https://image.pollinations.ai/prompt/${prompt}?width=512&height=512&nologo=true`;
       reply = reply.replace(/\[IMAGE:\s*.+?\]/i, '').trim();
-      if (!reply) reply = '🎨 Here\'s your generated image!';
+      if (!reply) reply = "Here's your generated image!";
     }
 
     // Save log
@@ -347,8 +400,7 @@ app.post('/api/chat', authMw, chatLimit, async (req, res) => {
 app.post('/api/image', authMw, async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: 'Prompt required' });
-  const encoded  = encodeURIComponent(prompt.trim());
-  const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=512&height=512&nologo=true`;
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.trim())}?width=512&height=512&nologo=true`;
   res.json({ imageUrl, prompt });
 });
 
@@ -374,7 +426,6 @@ function generateInviteCode() {
   return code;
 }
 
-// Validate invite code (public — used on signup page)
 app.get('/api/invite/validate/:code', async (req, res) => {
   try {
     const code = req.params.code.trim().toUpperCase();
@@ -387,7 +438,6 @@ app.get('/api/invite/validate/:code', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Validation failed' }); }
 });
 
-// Admin — create invites
 app.post('/api/admin/invites', authMw, adminMw, async (req, res) => {
   try {
     const { count = 1, email = '' } = req.body;
@@ -405,7 +455,6 @@ app.post('/api/admin/invites', authMw, adminMw, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed to create invites' }); }
 });
 
-// Admin — list invites
 app.get('/api/admin/invites', authMw, adminMw, async (req, res) => {
   try {
     const invites = MONGO_URI
@@ -415,15 +464,10 @@ app.get('/api/admin/invites', authMw, adminMw, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// Admin — delete invite
 app.delete('/api/admin/invites/:id', authMw, adminMw, async (req, res) => {
   try {
-    if (MONGO_URI) {
-      await Invite.findByIdAndDelete(req.params.id);
-    } else {
-      const idx = memInvites.findIndex(i => String(i.id) === req.params.id);
-      if (idx !== -1) memInvites.splice(idx, 1);
-    }
+    if (MONGO_URI) { await Invite.findByIdAndDelete(req.params.id); }
+    else { const idx = memInvites.findIndex(i => String(i.id) === req.params.id); if (idx !== -1) memInvites.splice(idx, 1); }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
@@ -504,9 +548,24 @@ app.get('/api/admin/logs', authMw, adminMw, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// ── Health ─────────────────────────────────────────────────────────────────────
+// Admin reset password for a user
+app.post('/api/admin/users/:id/reset-password', authMw, adminMw, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 chars' });
+    if (MONGO_URI) {
+      await User.findByIdAndUpdate(req.params.id, { password: await bcrypt.hash(newPassword, 10) });
+    } else {
+      const u = memUsers.find(u => String(u.id) === req.params.id);
+      if (u) u.password = await bcrypt.hash(newPassword, 10);
+    }
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: 'Failed' }); }
+});
+
+// ── Health ───────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({
-  status: 'ok', version: '2.0.0',
+  status: 'ok', version: '2.1.0',
   ai: groq ? 'groq-connected' : 'mock-mode',
   database: MONGO_URI ? 'mongodb-atlas' : 'in-memory',
   uptime: Math.floor(process.uptime()),
@@ -515,9 +574,10 @@ app.get('/api/health', (req, res) => res.json({
 app.use('/api/', (req, res) => res.status(404).json({ error: 'API endpoint not found' }));
 
 app.listen(PORT, () => {
-  console.log(`\n⚡ ByteChief AI Server v2.0`);
+  console.log(`\n⚡ ByteChief AI Server v2.1`);
   console.log(`🌐  http://localhost:${PORT}`);
   console.log(`🤖  AI: ${groq ? 'Groq connected' : 'Mock mode'}`);
   console.log(`🗄️   DB: ${MONGO_URI ? 'MongoDB Atlas' : 'In-memory'}`);
-  console.log(`🔐  Invite-only registration: ENABLED\n`);
+  console.log(`🔐  Admin: ${ADMIN_EMAIL_ENV}`);
+  console.log(`🎟️   Invite-only registration: ENABLED\n`);
 });
