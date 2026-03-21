@@ -86,7 +86,7 @@ document.getElementById('adminForm').addEventListener('submit', async (e) => {
   btn.disabled = true; btn.textContent = '⏳ Verifying...';
 
   try {
-    const res = await fetch('/api/auth/admin-login', {
+    const res = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
