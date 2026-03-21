@@ -6,37 +6,72 @@
 <title>ByteChief AI — Chat</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-/* --- Minimal styles (keep your original CSS) --- */
 body{margin:0;font-family:'Outfit',sans-serif;background:#000;color:#fff;}
-.topbar{height:52px;background:#111;display:flex;align-items:center;padding:0 12px;gap:8px;}
+.topbar{height:52px;background:#111;display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:8px;border-bottom:1px solid #1a1a1a;}
+.topbar-left{display:flex;align-items:center;gap:8px;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
 .layout{display:flex;height:calc(100vh - 52px);}
-.sidebar{width:240px;background:#111;display:flex;flex-direction:column;}
+.sidebar{width:240px;background:#0a0a0a;display:flex;flex-direction:column;border-right:1px solid #1a1a1a;}
 .main{flex:1;display:flex;flex-direction:column;}
-.messages{flex:1;overflow-y:auto;padding:16px;}
-.input-bar{padding:8px;background:#111;display:flex;gap:6px;}
-textarea{flex:1;background:none;color:#fff;border:none;resize:none;outline:none;}
-.send-btn, .mic-btn{background:#4f46e5;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;}
-.toast{position:fixed;top:60px;right:10px;background:#222;padding:8px 12px;border-radius:8px;color:#0f0;margin-top:6px;animation:fadeIn .3s;}
-@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.msg-row{display:flex;gap:8px;max-width:80%;}
+.msg-row.out{align-self:flex-end;flex-direction:row-reverse;}
+.bubble{padding:10px 14px;border-radius:12px;font-size:.9rem;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+.msg-row.in .bubble{background:#1a1a1a;color:#e2e8f0;border-bottom-left-radius:4px;}
+.msg-row.out .bubble{background:#4f46e5;color:#fff;border-bottom-right-radius:4px;}
+.input-bar{padding:10px;background:#111;display:flex;gap:6px;border-top:1px solid #1a1a1a;}
+textarea{flex:1;background:#1a1a1a;color:#fff;border:1px solid #2a2a2a;border-radius:8px;resize:none;outline:none;padding:8px 12px;font-family:inherit;font-size:.9rem;}
+.send-btn,.mic-btn{background:#4f46e5;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:1rem;transition:.2s;}
+.send-btn:hover,.mic-btn:hover{background:#4338ca;}
+.send-btn:disabled{opacity:.5;cursor:not-allowed;}
+.toast{position:fixed;top:60px;right:10px;background:#222;border:1px solid #333;padding:8px 14px;border-radius:8px;color:#0f0;margin-top:6px;animation:fadeIn .3s;font-size:.85rem;z-index:999;}
+.toast.err{color:#f87171;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.sidebar-head{padding:16px;font-size:.8rem;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.logout-btn{margin:auto 12px 12px;padding:8px;background:transparent;border:1px solid #1a1a1a;border-radius:8px;color:#555;font-family:inherit;font-size:.82rem;cursor:pointer;transition:.2s;}
+.logout-btn:hover{border-color:#4f46e5;color:#818cf8;}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 2px;}
+.typing span{width:7px;height:7px;border-radius:50%;background:#555;display:inline-block;animation:bounce .9s ease-in-out infinite;}
+.typing span:nth-child(2){animation-delay:.2s;}
+.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-6px);}}
 </style>
 </head>
 <body>
 
 <header class="topbar">
-  <div>ByteChief AI</div>
+  <div class="topbar-left">
+    <span>⚡</span> ByteChief AI
+  </div>
+  <div class="topbar-right">
+    <span id="userLabel" style="font-size:.82rem;color:#555;"></span>
+  </div>
 </header>
 
 <div class="layout">
   <aside class="sidebar">
-    <div style="padding:12px;">Conversations Sidebar</div>
+    <div class="sidebar-head">Commands</div>
+    <div style="padding:8px 12px;font-size:.78rem;color:#444;line-height:1.8;">
+      call [name]<br>
+      text [name]: [msg]<br>
+      open whatsapp<br>
+      open youtube<br>
+      open instagram<br>
+      open maps<br>
+      <br>
+      <span style="color:#4f46e5">Or just chat naturally!</span>
+    </div>
+    <button class="logout-btn" onclick="logout()">← Log Out</button>
   </aside>
 
   <main class="main">
     <div class="messages" id="messages">
-      <div>Welcome to ByteChief AI. Type a message or use voice commands.</div>
+      <div class="msg-row in">
+        <div class="bubble">👋 Welcome to ByteChief AI! I can execute voice commands OR answer any question using Groq AI. Try "call [name]", "open youtube", or just ask me anything!</div>
+      </div>
     </div>
     <div class="input-bar">
-      <textarea id="msgInput" placeholder="Type a command..." rows="1"></textarea>
+      <textarea id="msgInput" placeholder="Type a command or question..." rows="1"></textarea>
       <button class="mic-btn" id="micBtn">🎙️</button>
       <button class="send-btn" id="sendBtn">➤</button>
     </div>
@@ -45,128 +80,211 @@ textarea{flex:1;background:none;color:#fff;border:none;resize:none;outline:none;
 
 <div id="toasts"></div>
 
+<script src="/js/voice.js"></script>
 <script>
-// ====== CONTACT LIST ======
-const CONTACTS = {
-  'queen': '+2348012345678',
-  'samuel': '+2348098765432'
-};
+// ── Auth check ───────────────────────────────────────────────────────────────
+function getToken() {
+  return sessionStorage.getItem('bc_token') || localStorage.getItem('bc_token') || null;
+}
+function logout() {
+  ['bc_token','bc_user','bc_remember'].forEach(k => {
+    localStorage.removeItem(k); sessionStorage.removeItem(k);
+  });
+  window.location.href = 'login.html';
+}
 
-// ====== PERMISSIONS ======
+const token = getToken();
+if (!token) { window.location.replace('login.html'); }
+
+// Show user name
+try {
+  const u = JSON.parse(sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}');
+  if (u.name || u.email) document.getElementById('userLabel').textContent = u.name || u.email;
+} catch {}
+
+// ── Contacts (loaded from profile, NOT hardcoded) ────────────────────────────
+// Add contacts via "add contact [name] [number]" command
+const CONTACTS = JSON.parse(localStorage.getItem('bc_contacts') || '{}');
+
+// ── Permissions ──────────────────────────────────────────────────────────────
 const BC = {
-  micGranted: localStorage.getItem('bc_mic')==='1',
-  callGranted: localStorage.getItem('bc_calls')==='1',
-  smsGranted: localStorage.getItem('bc_sms')==='1',
-  appsGranted: localStorage.getItem('bc_apps')==='1',
+  micGranted:  localStorage.getItem('bc_mic')   === '1',
+  callGranted: localStorage.getItem('bc_calls') === '1',
+  smsGranted:  localStorage.getItem('bc_sms')   === '1',
+  appsGranted: localStorage.getItem('bc_apps')  === '1',
 };
 
-// ====== TOAST HELPER ======
-function showToast(msg, type='ok'){
+// ── Chat history for Groq context ────────────────────────────────────────────
+const chatHistory = [];
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg, type='ok') {
   const t = document.createElement('div');
-  t.className = 'toast';
+  t.className = 'toast' + (type==='err' ? ' err' : '');
   t.textContent = msg;
   document.getElementById('toasts').appendChild(t);
-  setTimeout(()=>t.remove(),3000);
+  setTimeout(() => t.remove(), 3000);
 }
 
-// ====== ESCAPE HTML ======
-function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+// ── Escape HTML ──────────────────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ====== SEND MESSAGE ======
-function sendMsg(){
-  const input = document.getElementById('msgInput');
-  const txt = input.value.trim();
-  if(!txt) return;
-  addMsg('out', txt);
-  input.value = '';
-  runCommand(txt);
-}
-
-// ====== ADD MESSAGE ======
-function addMsg(type, text){
+// ── Add message ──────────────────────────────────────────────────────────────
+function addMsg(type, text) {
   const row = document.createElement('div');
-  row.className = 'msg-row '+type;
+  row.className = 'msg-row ' + type;
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
-  bubble.innerHTML = esc(text);
+  bubble.innerHTML = type === 'in' ? text.replace(/\n/g,'<br>') : esc(text);
   row.appendChild(bubble);
   document.getElementById('messages').appendChild(row);
-  row.scrollIntoView({behavior:'smooth'});
+  row.scrollIntoView({ behavior: 'smooth' });
+  return row;
 }
 
-// ====== COMMAND ENGINE ======
-function runCommand(msg){
-  msg = msg.trim().toLowerCase();
+// ── Typing indicator ─────────────────────────────────────────────────────────
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'msg-row in'; row.id = 'typingRow';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  row.appendChild(bubble);
+  document.getElementById('messages').appendChild(row);
+  row.scrollIntoView({ behavior: 'smooth' });
+}
+function removeTyping() { document.getElementById('typingRow')?.remove(); }
 
-  // --- Call ---
+// ── Send message ─────────────────────────────────────────────────────────────
+async function sendMsg() {
+  const input = document.getElementById('msgInput');
+  const txt = input.value.trim();
+  if (!txt) return;
+  addMsg('out', txt);
+  input.value = '';
+  document.getElementById('sendBtn').disabled = true;
+
+  // Try local commands first
+  const handled = await runCommand(txt);
+
+  // If not a local command — send to Groq AI
+  if (!handled) {
+    showTyping();
+    try {
+      chatHistory.push({ role: 'user', content: txt });
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ message: txt, history: chatHistory.slice(-10) }),
+      });
+      removeTyping();
+      if (res.status === 401) { logout(); return; }
+      const data = await res.json();
+      const reply = data.reply || 'Sorry, I could not get a response.';
+      chatHistory.push({ role: 'assistant', content: reply });
+      addMsg('in', reply);
+    } catch (e) {
+      removeTyping();
+      addMsg('in', '⚠️ Could not reach AI. Check your connection.');
+    }
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+}
+
+// ── Command engine ───────────────────────────────────────────────────────────
+async function runCommand(msg) {
+  const lower = msg.trim().toLowerCase();
   let m;
-  if(m = msg.match(/^(call|phone|ring|dial)\s+(.+)/)){
-    if(!BC.callGranted){ showToast('Call permission denied','err'); return; }
-    let name = m[2].trim();
-    let number = CONTACTS[name] || name;
-    addMsg('in', `Calling ${name}...`);
-    setTimeout(()=>{ window.location.href = `tel:${encodeURIComponent(number)}`; },900);
-    return;
+
+  // Add contact
+  if (m = lower.match(/^add contact\s+([a-z]+)\s+(\+?[\d\s\-()]{7,})/)) {
+    const name = m[1].trim();
+    const num  = m[2].trim();
+    CONTACTS[name] = num;
+    localStorage.setItem('bc_contacts', JSON.stringify(CONTACTS));
+    addMsg('in', `✅ Contact saved: ${name} → ${num}`);
+    return true;
   }
 
-  // --- SMS ---
-  if(m = msg.match(/^(send\s+)?(sms|text|message)\s+to\s+([^:,\n]+)[,:\s]\s*(.+)/)){
-    if(!BC.smsGranted){ showToast('SMS permission denied','err'); return; }
-    let to = CONTACTS[m[3].trim().toLowerCase()] || m[3].trim();
-    let body = m[4].trim();
-    addMsg('in', `Sending SMS to ${m[3]}...`);
-    setTimeout(()=>{ window.location.href = `sms:${encodeURIComponent(to)}?body=${encodeURIComponent(body)}`; },900);
-    return;
-  }
-
-  // --- WhatsApp message ---
-  if(m = msg.match(/^(send\s+)?(whatsapp|wa)\s+(message\s+|msg\s+)?to\s+([^:,\n]+)[,:\s]\s*(.+)/)){
-    if(!BC.appsGranted){ showToast('Apps permission denied','err'); return; }
-    let to = CONTACTS[m[4].trim().toLowerCase()] || m[4].trim();
-    let text = m[5].trim();
-    addMsg('in', `Sending WhatsApp to ${m[4]}...`);
-    const isNum = /^\+?\d[\d\s\-()]{6,}$/.test(to);
-    if(isNum){
-      const ph = to.replace(/\D/g,'');
-      setTimeout(()=>{ window.location.href=`intent://send/${ph}#Intent;scheme=smsto;package=com.whatsapp;end`; },900);
-      setTimeout(()=>{ window.open(`https://wa.me/${ph}?text=${encodeURIComponent(text)}`,'_blank'); },2400);
-    } else {
-      setTimeout(()=>{ window.open(`https://wa.me/?text=${encodeURIComponent(text + ' - from ' + to)}`,'_blank'); },900);
+  // Call
+  if (m = lower.match(/^(call|phone|ring|dial)\s+(.+)/)) {
+    if (!BC.callGranted) {
+      localStorage.setItem('bc_calls','1'); BC.callGranted = true;
+      showToast('Call permission granted');
     }
-    return;
+    const name = m[2].trim();
+    const number = CONTACTS[name] || name;
+    if (!CONTACTS[name] && !/^\+?[\d\s\-()]{7,}$/.test(name)) {
+      addMsg('in', `❓ I don't have a number for "${name}". Say "add contact ${name} [number]" first.`);
+      return true;
+    }
+    addMsg('in', `📞 Calling ${name}...`);
+    setTimeout(() => { window.location.href = `tel:${number.replace(/\s/g,'')}`; }, 900);
+    return true;
   }
 
-  // --- Open apps ---
+  // SMS
+  if (m = lower.match(/^(send\s+)?(sms|text|message)\s+to\s+([^:,\n]+)[,:\s]\s*(.+)/)) {
+    if (!BC.smsGranted) { localStorage.setItem('bc_sms','1'); BC.smsGranted = true; }
+    const to   = CONTACTS[m[3].trim()] || m[3].trim();
+    const body = m[4].trim();
+    addMsg('in', `💬 Sending SMS to ${m[3].trim()}...`);
+    setTimeout(() => { window.location.href = `sms:${to}?body=${encodeURIComponent(body)}`; }, 900);
+    return true;
+  }
+
+  // WhatsApp
+  if (m = lower.match(/^(send\s+)?(whatsapp|wa)\s+(message\s+|msg\s+)?to\s+([^:,\n]+)[,:\s]\s*(.+)/)) {
+    if (!BC.appsGranted) { localStorage.setItem('bc_apps','1'); BC.appsGranted = true; }
+    const to   = CONTACTS[m[4].trim()] || m[4].trim();
+    const text = m[5].trim();
+    addMsg('in', `📲 Sending WhatsApp to ${m[4].trim()}...`);
+    const ph = to.replace(/\D/g,'');
+    setTimeout(() => { window.open(`https://wa.me/${ph}?text=${encodeURIComponent(text)}`, '_blank'); }, 900);
+    return true;
+  }
+
+  // Open apps
   const APPS = {
-    'whatsapp':'intent://launch#Intent;package=com.whatsapp;scheme=whatsapp;end|https://web.whatsapp.com',
-    'youtube':'intent://launch#Intent;package=com.google.android.youtube;end|https://m.youtube.com',
-    'instagram':'intent://launch#Intent;package=com.instagram.android;end|https://www.instagram.com',
-    'maps':'intent://launch#Intent;package=com.google.android.apps.maps;end|https://maps.google.com',
-    'camera':'intent:#Intent;action=android.media.action.STILL_IMAGE_CAMERA;end',
-    'settings':'intent:#Intent;action=android.settings.SETTINGS;end'
+    'whatsapp':  'https://web.whatsapp.com',
+    'youtube':   'https://m.youtube.com',
+    'instagram': 'https://www.instagram.com',
+    'maps':      'https://maps.google.com',
+    'twitter':   'https://twitter.com',
+    'tiktok':    'https://www.tiktok.com',
   };
-  if(msg.startsWith('open ')){
-    let app = msg.replace('open ','').trim();
-    if(APPS[app]){
-      if(!BC.appsGranted){ showToast('Apps permission denied','err'); return; }
-      addMsg('in', `Opening ${app}...`);
-      let parts = APPS[app].split('|');
-      setTimeout(()=>{ window.location.href=parts[0]; },900);
-      if(parts[1]) setTimeout(()=>{ window.open(parts[1],'_blank'); },2400);
-      return;
+  if (lower.startsWith('open ')) {
+    const app = lower.replace('open ','').trim();
+    if (APPS[app]) {
+      if (!BC.appsGranted) { localStorage.setItem('bc_apps','1'); BC.appsGranted = true; }
+      addMsg('in', `🚀 Opening ${app}...`);
+      setTimeout(() => { window.open(APPS[app], '_blank'); }, 600);
+      return true;
     }
   }
 
-  // --- Fallback ---
-  addMsg('in', "Sorry, I didn't understand that command.");
-  showToast("Command not recognized","err");
+  // Not a local command — let Groq handle it
+  return false;
 }
 
-// ====== EVENT LISTENERS ======
-document.getElementById('sendBtn').addEventListener('click',sendMsg);
-document.getElementById('msgInput').addEventListener('keydown', e=>{
-  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); }
+// ── Event listeners ──────────────────────────────────────────────────────────
+document.getElementById('sendBtn').addEventListener('click', sendMsg);
+document.getElementById('msgInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
 });
+
+// ── Voice ────────────────────────────────────────────────────────────────────
+let voice;
+try {
+  voice = new VoiceManager({
+    onResult: (t) => { document.getElementById('msgInput').value = t; sendMsg(); },
+    onStart:  () => { document.getElementById('micBtn').textContent = '🔴'; },
+    onEnd:    () => { document.getElementById('micBtn').textContent = '🎙️'; },
+    onError:  (e) => showToast('Voice error: ' + e, 'err'),
+  });
+  document.getElementById('micBtn').addEventListener('click', () => voice.toggle());
+} catch { document.getElementById('micBtn').style.display = 'none'; }
 </script>
 
 </body>
