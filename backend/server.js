@@ -350,10 +350,14 @@ app.post('/api/chat', authMw, chatLimit, async (req, res) => {
       if (memory.facts?.length)
         memCtx += `\nThings to remember about user: ${memory.facts.join('; ')}`;
 
+      const now = new Date();
+      const timeStr = now.toLocaleString('en-NG', { timeZone: 'Africa/Lagos', weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:true });
+      const timeCtx = `\nCurrent date and time in Nigeria (WAT, UTC+1): ${timeStr}`;
+
       const completion = await groq.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT + (memCtx ? `\n\nUSER MEMORY:${memCtx}` : '') },
+          { role: 'system', content: SYSTEM_PROMPT + timeCtx + (memCtx ? `\n\nUSER MEMORY:${memCtx}` : '') },
           ...history.slice(-12).map(h => ({ role: h.role, content: String(h.content).slice(0, 2000) })),
           { role: 'user', content: message },
         ],
