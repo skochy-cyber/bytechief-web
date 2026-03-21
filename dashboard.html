@@ -633,15 +633,54 @@ function addMsg(type,text,imgUrl=null){
   row.scrollIntoView({behavior:'smooth',block:'end'});
 }
 
-function fmt(t){
-  return esc(t)
-    .replace(/```([\s\S]+?)```/g,'<pre><code>$1</code></pre>')
-    .replace(/`([^`]+)`/g,'<code>$1</code>')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g,'<em>$1</em>')
-    .replace(/\n/g,'<br>');
+function fmt(t) {
+  // Normalize literal \n strings from AI (e.g. "\\n" in the text)
+  let s = String(t).replace(/\\n/g, '\n');
+
+  // Extract code blocks BEFORE escaping so we preserve them separately
+  const codeBlocks = [];
+  s = s.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push(esc(code));
+    return `\x00CODE${idx}\x00`;
+  });
+
+  // Extract inline code before escaping
+  const inlineCodes = [];
+  s = s.replace(/`([^`\n]+)`/g, (_, code) => {
+    const idx = inlineCodes.length;
+    inlineCodes.push(esc(code));
+    return `\x00INLINE${idx}\x00`;
+  });
+
+  // Now escape remaining HTML
+  s = esc(s);
+
+  // Apply markdown formatting
+  s = s
+    .replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/gs, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+
+  // Restore code blocks
+  codeBlocks.forEach((code, i) => {
+    s = s.replace(`\x00CODE${i}\x00`, `<pre><code>${code}</code></pre>`);
+  });
+
+  // Restore inline code
+  inlineCodes.forEach((code, i) => {
+    s = s.replace(`\x00INLINE${i}\x00`, `<code>${code}</code>`);
+  });
+
+  return s;
 }
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
 function cp(t){navigator.clipboard?.writeText(t).then(()=>toast('Copied!','ok'));}
 
 /* ── Typing ── */
