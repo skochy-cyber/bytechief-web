@@ -372,7 +372,7 @@ body {
     <div class="sh">Commands</div>
     <div class="cl">
       <div class="ci" onclick="qc('call ')"><span class="mi">call</span>Call contact</div>
-      <div class="ci" onclick="qc('text  with message: ')"><span class="mi">sms</span>Send SMS</div>
+      <div class="ci" onclick="qc('text [name] with message: [your message]')"><span class="mi">sms</span>Send SMS</div>
       <div class="ci" onclick="qc('open whatsapp')"><span class="mi">chat_bubble</span>WhatsApp</div>
       <div class="ci" onclick="qc('open youtube')"><span class="mi">play_circle</span>YouTube</div>
       <div class="ci" onclick="qc('open camera')"><span class="mi">photo_camera</span>Camera</div>
@@ -533,9 +533,11 @@ async function localCmd(msg){
     addMsg('in',`Calling ${name}...`);
     setTimeout(()=>{location.href=`tel:${(num||name).replace(/\s/g,'')}`},700);return true;
   }
-  if(m=lo.match(/^(?:send\s+)?(?:sms|text|message)\s+(?:to\s+)?([^:,]+)[,:\s]+(.+)$/)){
-    const to=mem.contacts[m[1].trim()]||m[1].trim();
-    addMsg('in',`Sending SMS to **${m[1].trim()}**...`);
+  if(m=lo.match(/^(?:send\s+)?(?:sms|text|message)\s+(?:to\s+)?(\S[^:,]*?)\s*[,:\s]+(.+)$/)){
+    const name=m[1].trim();
+    if(!name||name==='with'||name.length<2){addMsg('in','Please specify who to text. Example: "text John with message: hello"');return true;}
+    const to=mem.contacts[name]||name;
+    addMsg('in',`Sending SMS to **${name}**...`);
     setTimeout(()=>{location.href=`sms:${to}?body=${encodeURIComponent(m[2].trim())}`},700);return true;
   }
   if(m=lo.match(/^(?:send\s+)?(?:whatsapp|wa)\s+(?:to\s+)?([^:,]+)[,:\s]+(.+)$/)){
