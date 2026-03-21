@@ -91,20 +91,20 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 <div class="wrap">
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
-    <button class="tab" onclick="switchTab('users')">👥 Users</button>
-    <button class="tab" onclick="switchTab('logs')">📜 Chat Logs</button>
+    <button class="tab active" onclick="switchTab('overview')">Overview</button>
+    <button class="tab" onclick="switchTab('users')">Users</button>
+    <button class="tab" onclick="switchTab('invites')">Invites</button>
+    <button class="tab" onclick="switchTab('logs')">Chat Logs</button>
   </div>
 
   <!-- OVERVIEW -->
   <div class="panel active" id="panel-overview">
     <div class="stats-grid">
       <div class="stat-card"><h4>Total Users</h4><div class="num blue" id="stat-users">—</div></div>
-      <div class="stat-card"><h4>Total Commands</h4><div class="num green" id="stat-commands">—</div></div>
-      <div class="stat-card"><h4>Active Today</h4><div class="num amber" id="stat-active">—</div></div>
-      <div class="stat-card"><h4>Commands Today</h4><div class="num red" id="stat-recent">—</div></div>
+      <div class="stat-card"><h4>Total Chats</h4><div class="num green" id="stat-commands">—</div></div>
+      <div class="stat-card"><h4>Unused Invites</h4><div class="num amber" id="stat-invites">—</div></div>
     </div>
-    <div class="section-head"><h2>Recent Chat Logs</h2><button class="refresh-btn" onclick="loadLogs()">⟳ Refresh</button></div>
+    <div class="section-head"><h2>Recent Chat Logs</h2><button class="refresh-btn" onclick="loadLogs()">Refresh</button></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>User</th><th>Command</th><th>Response</th><th>Time</th></tr></thead>
@@ -115,7 +115,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
   <!-- USERS -->
   <div class="panel" id="panel-users">
-    <div class="section-head"><h2>All Users</h2><button class="refresh-btn" onclick="loadUsers()">⟳ Refresh</button></div>
+    <div class="section-head"><h2>All Users</h2><button class="refresh-btn" onclick="loadUsers()">Refresh</button></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead>
@@ -124,9 +124,28 @@ tr:hover td{background:rgba(255,255,255,.02);}
     </div>
   </div>
 
+  <!-- INVITES -->
+  <div class="panel" id="panel-invites">
+    <div class="section-head">
+      <h2>Invite Codes</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="email" id="inviteEmail" placeholder="Email (optional)" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.32rem .75rem;font-size:.78rem;color:var(--text);outline:none;width:200px">
+        <input type="number" id="inviteCount" value="1" min="1" max="20" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.32rem .6rem;font-size:.78rem;color:var(--text);outline:none;width:60px">
+        <button class="refresh-btn" style="color:#818cf8;border-color:rgba(79,70,229,.3)" onclick="createInvites()">+ Generate</button>
+        <button class="refresh-btn" onclick="loadInvites()">Refresh</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Code</th><th>For Email</th><th>Status</th><th>Used By</th><th>Created</th><th>Action</th></tr></thead>
+        <tbody id="invitesTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- LOGS -->
   <div class="panel" id="panel-logs">
-    <div class="section-head"><h2>All Chat Logs</h2><button class="refresh-btn" onclick="loadLogs()">⟳ Refresh</button></div>
+    <div class="section-head"><h2>All Chat Logs</h2><button class="refresh-btn" onclick="loadLogs()">Refresh</button></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>User</th><th>Command</th><th>Response</th><th>Model</th><th>Time</th></tr></thead>
@@ -153,11 +172,12 @@ async function api(url, opts = {}) {
 }
 
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['overview','users','logs'][i] === name));
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['overview','users','invites','logs'][i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
-  if (name === 'users') loadUsers();
-  if (name === 'logs')  loadLogs();
+  if (name === 'users')   loadUsers();
+  if (name === 'invites') loadInvites();
+  if (name === 'logs')    loadLogs();
 }
 
 async function loadAll() { await Promise.all([loadStats(), loadLogs()]); }
@@ -166,10 +186,10 @@ async function loadStats() {
   try {
     const d = await api('/api/admin/stats');
     if (!d) return;
-    document.getElementById('stat-users').textContent    = d.stats.totalUsers;
-    document.getElementById('stat-commands').textContent = d.stats.totalCommands;
-    document.getElementById('stat-active').textContent   = d.stats.activeUsers;
-    document.getElementById('stat-recent').textContent   = d.stats.recentCommands;
+    // FIX: server returns totalUsers, totalLogs, totalInvites directly (not nested under .stats)
+    document.getElementById('stat-users').textContent    = d.totalUsers    ?? '—';
+    document.getElementById('stat-commands').textContent = d.totalLogs     ?? '—';
+    document.getElementById('stat-invites').textContent  = d.totalInvites  ?? '—';
   } catch { toast('Failed to load stats', 'err'); }
 }
 
@@ -225,8 +245,49 @@ async function deleteUser(id, email) {
   if (!confirm(`Delete user ${email}? This will also delete all their chat logs.`)) return;
   try {
     await api(`/api/admin/users/${id}`, { method: 'DELETE' });
-    toast('User deleted ✓', 'ok');
+    toast('User deleted', 'ok');
     loadUsers(); loadStats();
+  } catch (e) { toast('Failed: ' + e.message, 'err'); }
+}
+
+async function loadInvites() {
+  const tbody = document.getElementById('invitesTable');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading...</td></tr>';
+  try {
+    const d = await api('/api/admin/invites');
+    if (!d) return;
+    if (!d.invites?.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No invite codes yet</td></tr>'; return; }
+    tbody.innerHTML = d.invites.map(inv => `
+      <tr>
+        <td><code style="font-family:monospace;color:#818cf8;font-size:.82rem">${esc(inv.code)}</code></td>
+        <td>${esc(inv.email || '— any —')}</td>
+        <td><span class="badge ${inv.used ? 'admin' : 'user'}">${inv.used ? 'Used' : 'Active'}</span></td>
+        <td>${esc(inv.usedBy || '—')}</td>
+        <td>${fmtDate(inv.createdAt)}</td>
+        <td>${!inv.used ? `<button class="del-btn" onclick="deleteInvite('${inv._id || inv.id}')">Delete</button>` : '—'}</td>
+      </tr>`).join('');
+  } catch (e) { tbody.innerHTML = `<tr><td colspan="6" class="empty">${e.message}</td></tr>`; }
+}
+
+async function createInvites() {
+  const email = document.getElementById('inviteEmail').value.trim();
+  const count = parseInt(document.getElementById('inviteCount').value) || 1;
+  try {
+    const d = await api('/api/admin/invites', { method:'POST', body: JSON.stringify({ count, email }) });
+    if (!d) return;
+    toast(`${d.invites.length} invite code(s) generated!`, 'ok');
+    // Show codes in alert for easy copying
+    const codes = d.invites.map(i => i.code).join('\n');
+    alert(`New invite code(s):\n\n${codes}\n\nShare these with your users.`);
+    loadInvites(); loadStats();
+  } catch (e) { toast('Failed: ' + e.message, 'err'); }
+}
+
+async function deleteInvite(id) {
+  if (!confirm('Delete this invite code?')) return;
+  try {
+    await api(`/api/admin/invites/${id}`, { method: 'DELETE' });
+    toast('Invite deleted', 'ok'); loadInvites(); loadStats();
   } catch (e) { toast('Failed: ' + e.message, 'err'); }
 }
 
