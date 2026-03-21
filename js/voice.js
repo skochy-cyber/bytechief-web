@@ -39,7 +39,8 @@ class VoiceManager {
 
   toggle() {
     if (!this.recognition) {
-      alert('Voice input is not supported in your browser. Try Chrome or Edge.');
+      // FIX: dispatch event instead of alert() so UI can handle it gracefully
+      window.dispatchEvent(new CustomEvent('voiceUnsupported'));
       return;
     }
     if (this.isActive) {
