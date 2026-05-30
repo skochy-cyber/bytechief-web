@@ -827,13 +827,20 @@ function logout() {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+function setUserDisplay(nameOrEmail) {
+  const display = nameOrEmail || 'User';
+  document.getElementById('uname').textContent = display;
+  document.getElementById('uav').textContent = display[0].toUpperCase();
+}
+
 function init() {
   try {
-    const u = JSON.parse(sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}');
-    const d = u.name || (u.email ? u.email.split('@')[0] : 'User');
-    document.getElementById('uname').textContent = d;
-    document.getElementById('uav').textContent = d[0].toUpperCase();
-    mem.name = u.name || d;
+    const raw = sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}';
+    const u = JSON.parse(raw);
+    // Prefer name, fall back to email prefix, then 'User'
+    const d = (u.name && u.name.trim()) || (u.email ? u.email.split('@')[0] : '');
+    setUserDisplay(d);
+    mem.name = d;
   } catch {}
   updateTTS();
   loadMemory();
@@ -845,7 +852,17 @@ async function loadMemory() {
     const r = await fetch('/api/memory', { headers: { Authorization: 'Bearer ' + getToken() } });
     if (r.ok) {
       const d = await r.json();
-      mem.name = d.name || mem.name;
+      // Update display name from server — most reliable source
+      if (d.name && d.name.trim()) {
+        setUserDisplay(d.name.trim());
+        mem.name = d.name.trim();
+      } else {
+        // Fall back to email from stored user object
+        try {
+          const u = JSON.parse(sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}');
+          if (u.email) setUserDisplay(u.email.split('@')[0]);
+        } catch {}
+      }
       mem.contacts = d.memory?.contacts || {};
       mem.preferences = d.memory?.preferences || {};
       mem.facts = d.memory?.facts || [];
