@@ -706,11 +706,16 @@ document.querySelectorAll('a,button,.activity-item').forEach(el=>{
 
 /* ── SESSION HELPERS ── */
 function saveSession(token, user, remember) {
+  // Never store a blank name — fall back to email prefix
+  const resolvedName = (user.name && user.name.trim())
+    ? user.name.trim()
+    : (user.email ? user.email.split('@')[0] : 'User');
+  const safeUser = { ...user, name: resolvedName };
   sessionStorage.setItem('bc_token', token);
-  sessionStorage.setItem('bc_user',  JSON.stringify(user));
+  sessionStorage.setItem('bc_user',  JSON.stringify(safeUser));
   if(remember){
     localStorage.setItem('bc_token', token);
-    localStorage.setItem('bc_user',  JSON.stringify(user));
+    localStorage.setItem('bc_user',  JSON.stringify(safeUser));
     localStorage.setItem('bc_remember', '1');
   } else {
     localStorage.removeItem('bc_token');
