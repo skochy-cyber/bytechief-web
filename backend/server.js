@@ -178,6 +178,21 @@ app.post('/api/login', async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Login failed' }); }
 });
 
+// ── /api/me — validate token and return current user ────────────────────────
+app.get('/api/me', authMw, async (req, res) => {
+  try {
+    let name = req.user.name || '';
+    let email = req.user.email || '';
+    if (MONGO_URI && req.user.id) {
+      const u = await User.findById(req.user.id).select('name email').lean();
+      if (u) { name = u.name || ''; email = u.email || ''; }
+    }
+    res.json({ id: req.user.id, email, name, role: req.user.role });
+  } catch {
+    res.json({ id: req.user.id, email: req.user.email || '', name: req.user.name || '', role: req.user.role });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
 // MEMORY ROUTES
 // ══════════════════════════════════════════════════════════════════════════════
