@@ -3,93 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="#4f46e5">
-<meta name="description" content="ByteChief AI — Your intelligent AI assistant on the web. Chat, voice commands, and simulate phone actions.">
-<meta property="og:title" content="ByteChief AI">
-<meta property="og:description" content="Your intelligent AI assistant — chat, voice, and phone commands.">
-<meta property="og:image" content="/assets/og-image.png">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0f0e0b">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ByteChief AI">
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/assets/icon-512.png">
 <title>ByteChief AI — Admin Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#000;--surface:#080808;--card:#0d0d0d;--border:#1a1a1a;--text:#fff;--muted:#555;--primary:#4f46e5;--r:12px;}
+/* ─── TOKENS ──────────────────────────────────── */
+:root{
+  --white:#ffffff;--off:#f9f8f6;--off2:#f3f1ec;
+  --border:#e6e2da;--border2:#d6d1c8;
+  --ink:#0f0e0b;--ink2:#2e2d29;--ink3:#706d66;--ink4:#a8a49d;
+  --accent:#c84b09;--accent2:#e85f1a;
+  --accent-bg:#fff3ec;--accent-border:rgba(200,75,9,.18);
+  --blue:#1a42c9;--blue-bg:rgba(26,66,201,.06);--blue-border:rgba(26,66,201,.2);
+  --green:#0f7a40;--green-bg:rgba(15,122,64,.06);--green-border:rgba(15,122,64,.2);
+  --gold:#9a6200;--gold-bg:#fffbeb;--gold-border:rgba(154,98,0,.15);
+  --red-bg:rgba(200,75,9,.06);
+  --shadow-sm:0 1px 3px rgba(15,14,11,.05),0 2px 8px rgba(15,14,11,.03);
+  --shadow:0 4px 20px rgba(15,14,11,.07),0 1px 4px rgba(15,14,11,.05);
+  --r:14px;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;}
-nav{padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
-.nav-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.95rem;text-decoration:none;color:var(--text);}
-.nav-logo img{height:24px;width:24px;border-radius:5px;object-fit:cover;}
-.admin-badge{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);border-radius:6px;padding:.2rem .7rem;font-size:.72rem;color:#c084fc;font-weight:700;}
-.nav-right{display:flex;gap:8px;}
-.nav-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.32rem .75rem;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:inherit;transition:.2s;}
-.nav-btn:hover{color:var(--text);}
-.nav-btn.danger{color:#ef4444;border-color:rgba(239,68,68,.2);}
-.nav-btn.danger:hover{background:rgba(239,68,68,.08);}
-.wrap{max-width:1200px;margin:0 auto;padding:24px;}
-.tabs{display:flex;gap:6px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:12px;}
-.tab{padding:.42rem .95rem;border-radius:8px;font-size:.83rem;font-weight:600;cursor:pointer;color:var(--muted);border:none;background:none;font-family:inherit;transition:.2s;}
-.tab:hover{color:var(--text);}
-.tab.active{background:rgba(79,70,229,.15);color:#818cf8;border:1px solid rgba(79,70,229,.3);}
-.panel{display:none;}
+html,body{height:100%;}
+body{background:var(--off);color:var(--ink);font-family:'Geist',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;}
+
+/* ─── NOISE ─────────────────────────────────────── */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.018;}
+
+/* ─── TOPBAR ─────────────────────────────────────── */
+.topbar{position:sticky;top:0;z-index:100;height:60px;background:rgba(255,255,255,.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);display:flex;align-items:center;padding:0 28px;gap:12px;}
+.topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:'Instrument Serif',serif;font-size:.98rem;color:var(--ink);letter-spacing:-.01em;}
+.logo-mark{width:30px;height:30px;background:var(--ink);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark svg{width:14px;height:14px;}
+.logo-label{font-weight:600;font-size:.95rem;}
+.admin-badge{display:inline-flex;align-items:center;gap:5px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:var(--ink);color:#fff;padding:3px 8px;border-radius:5px;position:relative;top:-1px;}
+.admin-badge svg{width:10px;height:10px;fill:#fff;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Geist',sans-serif;font-size:.78rem;font-weight:500;color:var(--ink3);background:none;border:1px solid var(--border2);border-radius:8px;padding:.3rem .75rem;transition:.2s;}
+.tb-btn:hover{color:var(--ink);background:var(--off2);border-color:var(--border2);}
+.tb-btn.danger{color:var(--accent);border-color:rgba(200,75,9,.2);}
+.tb-btn.danger:hover{background:var(--accent-bg);}
+.tb-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.6;}
+
+/* ─── LAYOUT ─────────────────────────────────────── */
+.wrap{max-width:1200px;margin:0 auto;padding:28px 28px 60px;position:relative;z-index:1;}
+
+/* ─── PAGE HEADER ─────────────────────────────────── */
+.pg-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:14px;}
+.pg-head-left{}
+.pg-eyebrow{font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:4px;}
+.pg-title{font-family:'Instrument Serif',serif;font-size:1.8rem;font-weight:400;letter-spacing:-.03em;color:var(--ink);line-height:1.1;}
+.pg-title em{font-style:italic;color:var(--accent);}
+
+/* ─── TABS ─────────────────────────────────────────── */
+.tabs{display:flex;gap:2px;margin-bottom:28px;border-bottom:1px solid var(--border);padding-bottom:0;}
+.tab{padding:.55rem 1.1rem;border-radius:9px 9px 0 0;font-size:.83rem;font-weight:500;color:var(--ink3);background:none;border:none;font-family:'Geist',sans-serif;position:relative;top:1px;transition:color .18s,background .18s;}
+.tab:hover{color:var(--ink);background:var(--off2);}
+.tab.active{color:var(--ink);background:var(--white);border:1px solid var(--border);border-bottom-color:var(--white);font-weight:600;}
+.panel{display:none;animation:panelIn .3s cubic-bezier(.16,1,.3,1);}
 .panel.active{display:block;}
-/* Stats */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px;}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;}
-.stat-card h4{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:8px;}
-.stat-card .num{font-size:2rem;font-weight:900;}
-.stat-card .num.blue{color:#818cf8;}
-.stat-card .num.green{color:#4ade80;}
-.stat-card .num.amber{color:#fbbf24;}
-.stat-card .num.red{color:#f87171;}
-/* Tables */
-.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.section-head h2{font-size:1rem;font-weight:700;}
-.refresh-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:.3rem .75rem;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:inherit;transition:.2s;}
-.refresh-btn:hover{color:var(--text);}
-.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
-table{width:100%;border-collapse:collapse;font-size:.83rem;}
-th{padding:10px 14px;text-align:left;color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);}
-td{padding:10px 14px;border-bottom:1px solid rgba(26,26,26,.6);color:#ccc;}
-tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(255,255,255,.02);}
-.badge{padding:.18rem .55rem;border-radius:4px;font-size:.7rem;font-weight:700;text-transform:uppercase;}
-.badge.user{background:rgba(79,70,229,.15);color:#818cf8;}
-.badge.admin{background:rgba(124,58,237,.15);color:#c084fc;}
-.del-btn{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;padding:.25rem .65rem;border-radius:6px;font-size:.75rem;cursor:pointer;font-family:inherit;transition:.2s;}
-.del-btn:hover{background:rgba(239,68,68,.2);}
-.empty{padding:32px;text-align:center;color:var(--muted);font-size:.88rem;}
-.loading{padding:24px;text-align:center;color:var(--muted);font-size:.85rem;}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ─── STAT GRID ─────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px;position:relative;overflow:hidden;transition:box-shadow .25s,transform .25s;}
+.stat-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0;transition:transform .3s;}
+.stat-card.blue::after{background:linear-gradient(90deg,var(--blue),#4f76e8);transform:scaleX(1);}
+.stat-card.green::after{background:linear-gradient(90deg,var(--green),#16a34a);transform:scaleX(1);}
+.stat-card.amber::after{background:linear-gradient(90deg,var(--gold),#ca8a04);transform:scaleX(1);}
+.stat-card.red::after{background:linear-gradient(90deg,var(--accent),var(--accent2));transform:scaleX(1);}
+.stat-label{font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink4);margin-bottom:10px;}
+.stat-num{font-family:'Instrument Serif',serif;font-size:2.4rem;font-weight:400;letter-spacing:-.04em;line-height:1;margin-bottom:2px;}
+.stat-num.blue{color:var(--blue);}
+.stat-num.green{color:var(--green);}
+.stat-num.amber{color:var(--gold);}
+.stat-num.red{color:var(--accent);}
+.stat-sub{font-size:.72rem;color:var(--ink4);}
+
+/* ─── SECTION ─────────────────────────────────────── */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.sec-title{font-family:'Instrument Serif',serif;font-size:1.1rem;font-weight:400;letter-spacing:-.02em;color:var(--ink);}
+.sec-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.sec-btn{display:inline-flex;align-items:center;gap:5px;font-family:'Geist',sans-serif;font-size:.77rem;font-weight:500;color:var(--ink3);background:none;border:1px solid var(--border2);border-radius:8px;padding:.3rem .75rem;transition:.18s;}
+.sec-btn:hover{color:var(--ink);background:var(--off2);}
+.sec-btn.primary{color:var(--blue);border-color:var(--blue-border);background:var(--blue-bg);}
+.sec-btn.primary:hover{background:rgba(26,66,201,.1);}
+.sec-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.6;}
+
+/* ─── TABLE ─────────────────────────────────────────── */
+.table-box{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm);}
+table{width:100%;border-collapse:collapse;font-size:.84rem;}
+thead th{padding:11px 16px;text-align:left;color:var(--ink4);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;background:var(--off);border-bottom:1px solid var(--border);}
+tbody td{padding:11px 16px;border-bottom:1px solid rgba(230,226,218,.5);color:var(--ink2);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr{transition:background .15s;}
+tbody tr:hover td{background:var(--off);}
+.empty-state{padding:40px 24px;text-align:center;color:var(--ink4);font-size:.86rem;}
+.loading-state{padding:28px 24px;text-align:center;color:var(--ink4);font-size:.85rem;display:flex;align-items:center;justify-content:center;gap:8px;}
+.loading-spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--ink3);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ─── BADGES ─────────────────────────────────────────── */
+.badge{display:inline-block;padding:.18rem .6rem;border-radius:5px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.badge.user{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);}
+.badge.admin{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border);}
+.badge.active{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);}
+.badge.used{background:var(--off2);color:var(--ink4);border:1px solid var(--border);}
+
+/* ─── ACTION BTNS ─────────────────────────────────────── */
+.del-btn{display:inline-flex;align-items:center;gap:4px;background:none;border:1px solid rgba(200,75,9,.2);color:var(--accent);padding:.22rem .65rem;border-radius:6px;font-size:.74rem;font-family:'Geist',sans-serif;transition:.18s;}
+.del-btn:hover{background:var(--accent-bg);}
+.del-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.6;}
+
+/* ─── INVITE INPUTS ─────────────────────────────────────── */
+.invite-fi{background:var(--off);border:1.5px solid var(--border);border-radius:9px;padding:.32rem .75rem;font-size:.8rem;color:var(--ink);font-family:'Geist',sans-serif;outline:none;transition:border-color .2s;}
+.invite-fi:focus{border-color:var(--ink2);}
+.invite-fi::placeholder{color:var(--ink4);}
+
+/* code display */
+code.code-tag{font-family:'Geist',monospace;font-size:.8rem;color:var(--blue);background:var(--blue-bg);border:1px solid var(--blue-border);padding:2px 7px;border-radius:5px;letter-spacing:.04em;}
+
+/* ─── TOAST ──────────────────────────────────────────── */
 .toast-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:999;}
-.toast{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:.82rem;animation:toastIn .3s ease;}
-.toast.ok{border-color:rgba(34,197,94,.3);color:#4ade80;}
-.toast.err{border-color:rgba(239,68,68,.3);color:#f87171;}
+.toast{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:11px 18px;font-size:.82rem;box-shadow:var(--shadow);animation:toastIn .3s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;gap:8px;}
+.toast.ok{border-color:var(--green-border);color:var(--green);}
+.toast.err{border-color:var(--accent-border);color:var(--accent);}
+.toast svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;}
 @keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+/* ─── RESPONSIVE ──────────────────────────────────────── */
+@media(max-width:640px){.wrap{padding:20px 16px 48px;}.stats-grid{grid-template-columns:1fr 1fr;}.topbar{padding:0 16px;}.tabs{overflow-x:auto;white-space:nowrap;}.tab{font-size:.77rem;padding:.5rem .9rem;}}
+@media(max-width:400px){.stats-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
-<nav>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <a href="/" class="nav-logo"><img src="assets/logo-dark.png" alt="">ByteChief AI</a>
-    <span class="admin-badge">🛡️ Admin</span>
+
+<div class="topbar">
+  <a href="/" class="topbar-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M3 2h10l-2 6H5L3 2zm0 0L1 14h14L12 8" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <span class="logo-label">ByteChief AI</span>
+  </a>
+  <span class="admin-badge">
+    <svg viewBox="0 0 12 12"><path d="M6 1l4 1.6V6c0 2.4-2 4-4 5C4 10 2 8.4 2 6V2.6L6 1z" fill="#fff"/></svg>
+    Admin
+  </span>
+  <div class="topbar-right">
+    <button class="tb-btn" onclick="loadAll()">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Refresh
+    </button>
+    <button class="tb-btn danger" onclick="logout()">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
   </div>
-  <div class="nav-right">
-    <button class="nav-btn" onclick="loadAll()">⟳ Refresh</button>
-    <button class="nav-btn danger" onclick="logout()">Logout</button>
-  </div>
-</nav>
+</div>
 
 <div class="wrap">
+
+  <div class="pg-head">
+    <div class="pg-head-left">
+      <div class="pg-eyebrow">Administration</div>
+      <h1 class="pg-title">Control <em>Panel</em></h1>
+    </div>
+  </div>
+
   <div class="tabs">
     <button class="tab active" onclick="switchTab('overview')">Overview</button>
     <button class="tab" onclick="switchTab('users')">Users</button>
@@ -100,217 +189,265 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <!-- OVERVIEW -->
   <div class="panel active" id="panel-overview">
     <div class="stats-grid">
-      <div class="stat-card"><h4>Total Users</h4><div class="num blue" id="stat-users">—</div></div>
-      <div class="stat-card"><h4>Total Chats</h4><div class="num green" id="stat-commands">—</div></div>
-      <div class="stat-card"><h4>Unused Invites</h4><div class="num amber" id="stat-invites">—</div></div>
+      <div class="stat-card blue">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-num blue" id="stat-users">—</div>
+        <div class="stat-sub">Registered accounts</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Total Chats</div>
+        <div class="stat-num green" id="stat-commands">—</div>
+        <div class="stat-sub">Messages processed</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Unused Invites</div>
+        <div class="stat-num amber" id="stat-invites">—</div>
+        <div class="stat-sub">Active invite codes</div>
+      </div>
     </div>
-    <div class="section-head"><h2>Recent Chat Logs</h2><button class="refresh-btn" onclick="loadLogs()">Refresh</button></div>
-    <div class="table-wrap">
+
+    <div class="sec-head">
+      <div class="sec-title">Recent Chat Logs</div>
+      <div class="sec-actions">
+        <button class="sec-btn" onclick="loadLogs()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+    <div class="table-box">
       <table>
         <thead><tr><th>User</th><th>Command</th><th>Response</th><th>Time</th></tr></thead>
-        <tbody id="logsPreview"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+        <tbody id="logsPreview"><tr><td colspan="4"><div class="loading-state"><div class="loading-spin"></div>Loading…</div></td></tr></tbody>
       </table>
     </div>
   </div>
 
   <!-- USERS -->
   <div class="panel" id="panel-users">
-    <div class="section-head"><h2>All Users</h2><button class="refresh-btn" onclick="loadUsers()">Refresh</button></div>
-    <div class="table-wrap">
+    <div class="sec-head">
+      <div class="sec-title">All Users</div>
+      <div class="sec-actions">
+        <button class="sec-btn" onclick="loadUsers()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+    <div class="table-box">
       <table>
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead>
-        <tbody id="usersTable"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+        <tbody id="usersTable"><tr><td colspan="5"><div class="loading-state"><div class="loading-spin"></div>Loading…</div></td></tr></tbody>
       </table>
     </div>
   </div>
 
   <!-- INVITES -->
   <div class="panel" id="panel-invites">
-    <div class="section-head">
-      <h2>Invite Codes</h2>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input type="email" id="inviteEmail" placeholder="Email (optional)" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.32rem .75rem;font-size:.78rem;color:var(--text);outline:none;width:200px">
-        <input type="number" id="inviteCount" value="1" min="1" max="20" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.32rem .6rem;font-size:.78rem;color:var(--text);outline:none;width:60px">
-        <button class="refresh-btn" style="color:#818cf8;border-color:rgba(79,70,229,.3)" onclick="createInvites()">+ Generate</button>
-        <button class="refresh-btn" onclick="loadInvites()">Refresh</button>
+    <div class="sec-head">
+      <div class="sec-title">Invite Codes</div>
+      <div class="sec-actions">
+        <input type="email" id="inviteEmail" class="invite-fi" placeholder="Email (optional)" style="width:190px">
+        <input type="number" id="inviteCount" class="invite-fi" value="1" min="1" max="20" style="width:64px">
+        <button class="sec-btn primary" onclick="createInvites()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Generate
+        </button>
+        <button class="sec-btn" onclick="loadInvites()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/></svg>
+          Refresh
+        </button>
       </div>
     </div>
-    <div class="table-wrap">
+    <div class="table-box">
       <table>
         <thead><tr><th>Code</th><th>For Email</th><th>Status</th><th>Used By</th><th>Created</th><th>Action</th></tr></thead>
-        <tbody id="invitesTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        <tbody id="invitesTable"><tr><td colspan="6"><div class="loading-state"><div class="loading-spin"></div>Loading…</div></td></tr></tbody>
       </table>
     </div>
   </div>
 
   <!-- LOGS -->
   <div class="panel" id="panel-logs">
-    <div class="section-head"><h2>All Chat Logs</h2><button class="refresh-btn" onclick="loadLogs()">Refresh</button></div>
-    <div class="table-wrap">
+    <div class="sec-head">
+      <div class="sec-title">All Chat Logs</div>
+      <div class="sec-actions">
+        <button class="sec-btn" onclick="loadLogs()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+    <div class="table-box">
       <table>
         <thead><tr><th>User</th><th>Command</th><th>Response</th><th>Model</th><th>Time</th></tr></thead>
-        <tbody id="logsTable"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+        <tbody id="logsTable"><tr><td colspan="5"><div class="loading-state"><div class="loading-spin"></div>Loading…</div></td></tr></tbody>
       </table>
     </div>
   </div>
+
 </div>
 
 <div class="toast-wrap" id="toasts"></div>
 
 <script>
 const token = localStorage.getItem('bc_admin_token');
-if (!token) window.location.href = 'admin-login.html';
+if(!token) window.location.href = 'admin-login.html';
 
-async function api(url, opts = {}) {
+async function api(url, opts={}) {
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token, ...(opts.headers || {}) },
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(opts.headers||{})},
     ...opts,
   });
-  if (res.status === 401 || res.status === 403) { logout(); return null; }
-  if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Request failed'); }
+  if(res.status===401||res.status===403){logout();return null;}
+  if(!res.ok){const e=await res.json();throw new Error(e.error||'Request failed');}
   return res.json();
 }
 
 function switchTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['overview','users','invites','logs'][i] === name));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  if (name === 'users')   loadUsers();
-  if (name === 'invites') loadInvites();
-  if (name === 'logs')    loadLogs();
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['overview','users','invites','logs'][i]===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='users')   loadUsers();
+  if(name==='invites') loadInvites();
+  if(name==='logs')    loadLogs();
 }
 
-async function loadAll() { await Promise.all([loadStats(), loadLogs()]); }
+async function loadAll(){await Promise.all([loadStats(),loadLogs()]);}
 
-async function loadStats() {
-  try {
-    const d = await api('/api/admin/stats');
-    if (!d) return;
-    // FIX: server returns totalUsers, totalLogs, totalInvites directly (not nested under .stats)
-    document.getElementById('stat-users').textContent    = d.totalUsers    ?? '—';
-    document.getElementById('stat-commands').textContent = d.totalLogs     ?? '—';
-    document.getElementById('stat-invites').textContent  = d.totalInvites  ?? '—';
-  } catch { toast('Failed to load stats', 'err'); }
+async function loadStats(){
+  try{
+    const d=await api('/api/admin/stats');
+    if(!d) return;
+    document.getElementById('stat-users').textContent    = d.totalUsers   ?? '—';
+    document.getElementById('stat-commands').textContent = d.totalLogs    ?? '—';
+    document.getElementById('stat-invites').textContent  = d.totalInvites ?? '—';
+  }catch{toast('Failed to load stats','err');}
 }
 
-async function loadUsers() {
-  const tbody = document.getElementById('usersTable');
-  tbody.innerHTML = '<tr><td colspan="5" class="loading">Loading...</td></tr>';
-  try {
-    const d = await api('/api/admin/users');
-    if (!d) return;
-    if (!d.users?.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No users yet</td></tr>'; return; }
-    tbody.innerHTML = d.users.map(u => `
+async function loadUsers(){
+  const tbody=document.getElementById('usersTable');
+  tbody.innerHTML='<tr><td colspan="5"><div class="loading-state"><div class="loading-spin"></div>Loading…</div></td></tr>';
+  try{
+    const d=await api('/api/admin/users');
+    if(!d) return;
+    if(!d.users?.length){tbody.innerHTML='<tr><td colspan="5" class="empty-state">No users yet</td></tr>';return;}
+    tbody.innerHTML=d.users.map(u=>`
       <tr>
-        <td>${esc(u.name || '—')}</td>
-        <td>${esc(u.email)}</td>
+        <td style="font-weight:500">${esc(u.name||'—')}</td>
+        <td style="color:var(--ink3)">${esc(u.email)}</td>
         <td><span class="badge ${u.role}">${u.role}</span></td>
-        <td>${fmtDate(u.createdAt)}</td>
-        <td><button class="del-btn" onclick="deleteUser('${u._id || u.id}','${esc(u.email)}')">🗑 Delete</button></td>
+        <td style="color:var(--ink4)">${fmtDate(u.createdAt)}</td>
+        <td><button class="del-btn" onclick="deleteUser('${u._id||u.id}','${esc(u.email)}')">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete
+        </button></td>
       </tr>`).join('');
-  } catch (e) { tbody.innerHTML = `<tr><td colspan="5" class="empty">${e.message}</td></tr>`; }
+  }catch(e){tbody.innerHTML=`<tr><td colspan="5" class="empty-state">${e.message}</td></tr>`;}
 }
 
-async function loadLogs() {
-  const preview = document.getElementById('logsPreview');
-  const full    = document.getElementById('logsTable');
-  if (preview) preview.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
-  if (full)    full.innerHTML    = '<tr><td colspan="5" class="loading">Loading...</td></tr>';
-  try {
-    const d = await api('/api/admin/logs');
-    if (!d) return;
-    const logs = d.logs || [];
-    if (!logs.length) {
-      if (preview) preview.innerHTML = '<tr><td colspan="4" class="empty">No logs yet</td></tr>';
-      if (full)    full.innerHTML    = '<tr><td colspan="5" class="empty">No logs yet</td></tr>';
+async function loadLogs(){
+  const preview=document.getElementById('logsPreview');
+  const full=document.getElementById('logsTable');
+  if(preview) preview.innerHTML='<tr><td colspan="4"><div class="loading-state"><div class="loading-spin"></div>Loading…</div></td></tr>';
+  if(full)    full.innerHTML='<tr><td colspan="5"><div class="loading-state"><div class="loading-spin"></div>Loading…</div></td></tr>';
+  try{
+    const d=await api('/api/admin/logs');
+    if(!d) return;
+    const logs=d.logs||[];
+    if(!logs.length){
+      if(preview) preview.innerHTML='<tr><td colspan="4" class="empty-state">No logs yet</td></tr>';
+      if(full)    full.innerHTML='<tr><td colspan="5" class="empty-state">No logs yet</td></tr>';
       return;
     }
-    const rowFn = (log, cols) => {
-      const user = log.userName || log.userEmail || (log.userId?.email) || '—';
-      const cmd  = esc(log.command?.slice(0,60) || '—') + (log.command?.length > 60 ? '…' : '');
-      const res  = esc(log.response?.slice(0,80) || '—') + (log.response?.length > 80 ? '…' : '');
-      const time = fmtDate(log.createdAt);
-      if (cols === 4) return `<tr><td>${esc(user)}</td><td>${cmd}</td><td>${res}</td><td>${time}</td></tr>`;
-      return `<tr><td>${esc(user)}</td><td>${cmd}</td><td>${res}</td><td>${esc(log.model||'—')}</td><td>${time}</td></tr>`;
+    const rowFn=(log,cols)=>{
+      const user=log.userName||log.userEmail||(log.userId?.email)||'—';
+      const cmd=esc(log.command?.slice(0,60)||'—')+(log.command?.length>60?'…':'');
+      const res=esc(log.response?.slice(0,80)||'—')+(log.response?.length>80?'…':'');
+      const time=fmtDate(log.createdAt);
+      if(cols===4) return `<tr><td style="font-weight:500">${esc(user)}</td><td style="color:var(--ink3)">${cmd}</td><td style="color:var(--ink4);font-size:.8rem">${res}</td><td style="color:var(--ink4)">${time}</td></tr>`;
+      return `<tr><td style="font-weight:500">${esc(user)}</td><td style="color:var(--ink3)">${cmd}</td><td style="color:var(--ink4);font-size:.8rem">${res}</td><td><code class="code-tag">${esc(log.model||'—')}</code></td><td style="color:var(--ink4)">${time}</td></tr>`;
     };
-    if (preview) preview.innerHTML = logs.slice(0,10).map(l => rowFn(l,4)).join('');
-    if (full)    full.innerHTML    = logs.map(l => rowFn(l,5)).join('');
-  } catch (e) {
-    if (preview) preview.innerHTML = `<tr><td colspan="4" class="empty">${e.message}</td></tr>`;
-    if (full)    full.innerHTML    = `<tr><td colspan="5" class="empty">${e.message}</td></tr>`;
+    if(preview) preview.innerHTML=logs.slice(0,10).map(l=>rowFn(l,4)).join('');
+    if(full)    full.innerHTML=logs.map(l=>rowFn(l,5)).join('');
+  }catch(e){
+    if(preview) preview.innerHTML=`<tr><td colspan="4" class="empty-state">${e.message}</td></tr>`;
+    if(full)    full.innerHTML=`<tr><td colspan="5" class="empty-state">${e.message}</td></tr>`;
   }
 }
 
-async function deleteUser(id, email) {
-  if (!confirm(`Delete user ${email}? This will also delete all their chat logs.`)) return;
-  try {
-    await api(`/api/admin/users/${id}`, { method: 'DELETE' });
-    toast('User deleted', 'ok');
-    loadUsers(); loadStats();
-  } catch (e) { toast('Failed: ' + e.message, 'err'); }
+async function deleteUser(id,email){
+  if(!confirm(`Delete user ${email}? This will also delete all their chat logs.`)) return;
+  try{
+    await api(`/api/admin/users/${id}`,{method:'DELETE'});
+    toast('User deleted','ok'); loadUsers(); loadStats();
+  }catch(e){toast('Failed: '+e.message,'err');}
 }
 
-async function loadInvites() {
-  const tbody = document.getElementById('invitesTable');
-  tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading...</td></tr>';
-  try {
-    const d = await api('/api/admin/invites');
-    if (!d) return;
-    if (!d.invites?.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No invite codes yet</td></tr>'; return; }
-    tbody.innerHTML = d.invites.map(inv => `
+async function loadInvites(){
+  const tbody=document.getElementById('invitesTable');
+  tbody.innerHTML='<tr><td colspan="6"><div class="loading-state"><div class="loading-spin"></div>Loading…</div></td></tr>';
+  try{
+    const d=await api('/api/admin/invites');
+    if(!d) return;
+    if(!d.invites?.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state">No invite codes yet</td></tr>';return;}
+    tbody.innerHTML=d.invites.map(inv=>`
       <tr>
-        <td><code style="font-family:monospace;color:#818cf8;font-size:.82rem">${esc(inv.code)}</code></td>
-        <td>${esc(inv.email || '— any —')}</td>
-        <td><span class="badge ${inv.used ? 'admin' : 'user'}">${inv.used ? 'Used' : 'Active'}</span></td>
-        <td>${esc(inv.usedBy || '—')}</td>
-        <td>${fmtDate(inv.createdAt)}</td>
-        <td>${!inv.used ? `<button class="del-btn" onclick="deleteInvite('${inv._id || inv.id}')">Delete</button>` : '—'}</td>
+        <td><code class="code-tag">${esc(inv.code)}</code></td>
+        <td style="color:var(--ink3)">${esc(inv.email||'— any —')}</td>
+        <td><span class="badge ${inv.used?'used':'active'}">${inv.used?'Used':'Active'}</span></td>
+        <td style="color:var(--ink4)">${esc(inv.usedBy||'—')}</td>
+        <td style="color:var(--ink4)">${fmtDate(inv.createdAt)}</td>
+        <td>${!inv.used?`<button class="del-btn" onclick="deleteInvite('${inv._id||inv.id}')">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>Delete</button>`:'—'}</td>
       </tr>`).join('');
-  } catch (e) { tbody.innerHTML = `<tr><td colspan="6" class="empty">${e.message}</td></tr>`; }
+  }catch(e){tbody.innerHTML=`<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;}
 }
 
-async function createInvites() {
-  const email = document.getElementById('inviteEmail').value.trim();
-  const count = parseInt(document.getElementById('inviteCount').value) || 1;
-  try {
-    const d = await api('/api/admin/invites', { method:'POST', body: JSON.stringify({ count, email }) });
-    if (!d) return;
-    toast(`${d.invites.length} invite code(s) generated!`, 'ok');
-    // Show codes in alert for easy copying
-    const codes = d.invites.map(i => i.code).join('\n');
+async function createInvites(){
+  const email=document.getElementById('inviteEmail').value.trim();
+  const count=parseInt(document.getElementById('inviteCount').value)||1;
+  try{
+    const d=await api('/api/admin/invites',{method:'POST',body:JSON.stringify({count,email})});
+    if(!d) return;
+    toast(`${d.invites.length} invite code(s) generated`,'ok');
+    const codes=d.invites.map(i=>i.code).join('\n');
     alert(`New invite code(s):\n\n${codes}\n\nShare these with your users.`);
     loadInvites(); loadStats();
-  } catch (e) { toast('Failed: ' + e.message, 'err'); }
+  }catch(e){toast('Failed: '+e.message,'err');}
 }
 
-async function deleteInvite(id) {
-  if (!confirm('Delete this invite code?')) return;
-  try {
-    await api(`/api/admin/invites/${id}`, { method: 'DELETE' });
-    toast('Invite deleted', 'ok'); loadInvites(); loadStats();
-  } catch (e) { toast('Failed: ' + e.message, 'err'); }
+async function deleteInvite(id){
+  if(!confirm('Delete this invite code?')) return;
+  try{
+    await api(`/api/admin/invites/${id}`,{method:'DELETE'});
+    toast('Invite deleted','ok'); loadInvites(); loadStats();
+  }catch(e){toast('Failed: '+e.message,'err');}
 }
 
-function logout() {
+function logout(){
   localStorage.removeItem('bc_admin_token');
-  window.location.href = 'admin-login.html';
+  window.location.href='admin-login.html';
 }
 
-function esc(t) { return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fmtDate(d) {
-  if (!d) return '—';
-  return new Date(d).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+function esc(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtDate(d){
+  if(!d) return '—';
+  return new Date(d).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
 }
-function toast(msg, type='ok') {
-  const wrap = document.getElementById('toasts');
-  const el = document.createElement('div');
-  el.className = `toast ${type}`; el.textContent = msg;
+function toast(msg,type='ok'){
+  const wrap=document.getElementById('toasts');
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  const icon=type==='ok'
+    ?'<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    :'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+  el.innerHTML=icon+msg;
   wrap.appendChild(el);
-  setTimeout(() => { el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 3000);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},3000);
 }
 
-// Boot
-document.addEventListener('DOMContentLoaded', loadAll);
+document.addEventListener('DOMContentLoaded',loadAll);
 </script>
 </body>
 </html>
