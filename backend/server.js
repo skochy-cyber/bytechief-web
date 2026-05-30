@@ -245,6 +245,41 @@ app.post('/api/chat', authMw, chatLimit, async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
+// GROQ PROXY ROUTE (server-side key — users never see it)
+// ══════════════════════════════════════════════════════════════════════════════
+
+app.post('/api/groq', authMw, chatLimit, async (req, res) => {
+  const GROQ_KEY = process.env.GROQ_API_KEY;
+  if (!GROQ_KEY) return res.status(503).json({ error: 'Groq not configured on this server' });
+
+  const { model, messages, max_tokens, temperature, stream } = req.body;
+  if (!model || !messages) return res.status(400).json({ error: 'model and messages required' });
+
+  try {
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${GROQ_KEY}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens:  max_tokens  || 1024,
+        temperature: temperature || 0.7,
+        stream:      stream      || false,
+      }),
+    });
+
+    const data = await groqRes.json();
+    if (!groqRes.ok) return res.status(groqRes.status).json({ error: data?.error?.message || 'Groq error' });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: 'Groq proxy failed: ' + e.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
 // IMAGE ROUTE (Pollinations proxy)
 // ══════════════════════════════════════════════════════════════════════════════
 
