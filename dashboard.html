@@ -511,6 +511,87 @@ body::before {
 .add-btn:active { transform:scale(.93); }
 .add-btn svg { width:16px; height:16px; }
 
+/* ── Media Picker Sheet ──────────────────────────────────────────────────── */
+.media-picker-backdrop {
+  position:fixed; inset:0; z-index:900;
+  background:rgba(0,0,0,.55);
+  opacity:0; visibility:hidden;
+  transition:opacity .22s, visibility .22s;
+}
+.media-picker-backdrop.open { opacity:1; visibility:visible; }
+
+.media-picker-sheet {
+  position:fixed; left:0; right:0; bottom:0; z-index:901;
+  background:#1c1c1e;
+  border-radius:18px 18px 0 0;
+  padding:12px 20px 36px;
+  transform:translateY(100%);
+  transition:transform .28s cubic-bezier(.32,1,.54,1);
+}
+.media-picker-backdrop.open .media-picker-sheet { transform:translateY(0); }
+
+.media-picker-handle {
+  width:36px; height:4px; border-radius:2px;
+  background:#48484a; margin:0 auto 18px;
+}
+.media-picker-title {
+  text-align:center; font-size:.85rem; font-weight:600;
+  color:#ebebf5cc; margin-bottom:18px; letter-spacing:.01em;
+}
+.media-picker-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+  margin-bottom:20px;
+}
+.media-picker-option {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:9px; padding:18px 8px 14px;
+  background:#2c2c2e; border:none; border-radius:14px;
+  color:#fff; cursor:pointer;
+  transition:background .15s, transform .1s;
+  min-height:80px;
+}
+.media-picker-option:hover  { background:#3a3a3c; }
+.media-picker-option:active { transform:scale(.95); }
+.media-picker-icon {
+  width:40px; height:40px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+}
+.media-picker-icon svg { width:22px; height:22px; }
+.media-picker-label { font-size:.75rem; font-weight:500; color:#ebebf5; }
+
+/* icon bg colours */
+.mpic-camera  { background:#2c6aff; }
+.mpic-photos  { background:#30b34a; }
+.mpic-files   { background:#ff6b35; }
+
+.media-picker-divider {
+  height:1px; background:#38383a; margin:0 -4px 18px;
+}
+.media-picker-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 4px;
+}
+.media-picker-row-left { display:flex; align-items:center; gap:12px; }
+.media-picker-row-icon {
+  width:32px; height:32px; border-radius:8px;
+  background:#2c2c2e; display:flex; align-items:center; justify-content:center;
+}
+.media-picker-row-icon svg { width:18px; height:18px; }
+.media-picker-row-label { font-size:.88rem; font-weight:500; color:#ebebf5; }
+.media-picker-row-sub   { font-size:.73rem; color:#636366; }
+.media-picker-toggle {
+  width:44px; height:26px; border-radius:13px;
+  background:#30b34a; border:none; cursor:pointer;
+  position:relative; transition:background .2s; flex-shrink:0;
+}
+.media-picker-toggle::after {
+  content:''; position:absolute; top:3px; right:3px;
+  width:20px; height:20px; border-radius:50%;
+  background:#fff; transition:right .2s;
+}
+.media-picker-toggle.off { background:#48484a; }
+.media-picker-toggle.off::after { right:21px; }
+
 /* Model pill */
 .model-pill {
   display:flex; align-items:center; gap:5px;
@@ -745,6 +826,66 @@ body::before {
       </div>
     </div>
 
+    <!-- MEDIA PICKER SHEET -->
+    <div class="media-picker-backdrop" id="mediaPicker" onclick="closeMediaPicker(event)">
+      <div class="media-picker-sheet">
+        <div class="media-picker-handle"></div>
+        <div class="media-picker-title">Add to chat</div>
+        <div class="media-picker-grid">
+          <!-- Camera -->
+          <button class="media-picker-option" onclick="openCamera()">
+            <div class="media-picker-icon mpic-camera">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </div>
+            <span class="media-picker-label">Camera</span>
+          </button>
+          <!-- Photos -->
+          <button class="media-picker-option" onclick="openPhotos()">
+            <div class="media-picker-icon mpic-photos">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+            <span class="media-picker-label">Photos</span>
+          </button>
+          <!-- Files -->
+          <button class="media-picker-option" onclick="openFiles()">
+            <div class="media-picker-icon mpic-files">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+            </div>
+            <span class="media-picker-label">Files</span>
+          </button>
+        </div>
+
+        <div class="media-picker-divider"></div>
+
+        <!-- Web Search toggle row -->
+        <div class="media-picker-row">
+          <div class="media-picker-row-left">
+            <div class="media-picker-row-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ebebf5" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <span class="media-picker-row-label">Web search</span>
+          </div>
+          <button class="media-picker-toggle" id="wsToggleSheet" onclick="toggleWebSearchSheet()"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="fileInputCamera" style="display:none;" accept="image/*" capture="environment" onchange="handleFiles(this.files)">
+    <input type="file" id="fileInputPhotos" style="display:none;" accept="image/*" multiple onchange="handleFiles(this.files)">
+    <input type="file" id="fileInputFiles"  style="display:none;" multiple accept=".pdf,.txt,.csv,.json,.md,.py,.js,.ts,.html,.css" onchange="handleFiles(this.files)">
+
     <!-- INPUT BAR — Claude-app style -->
     <div class="ibar">
       <div class="file-strip" id="fileStrip" style="display:none;"></div>
@@ -752,13 +893,12 @@ body::before {
       <div class="input-wrap">
         <textarea class="inp-ta" id="ta" placeholder="Reply to Claude…" rows="1"
           onkeydown="handleKey(event)" oninput="autoResize(this);updateSendBtn();"></textarea>
-        <input type="file" id="fileInput" style="display:none;" multiple accept="image/*,.pdf,.txt,.csv,.json,.md,.py,.js,.ts,.html,.css" onchange="handleFiles(this.files)">
       </div>
       <!-- Bottom toolbar -->
       <div class="input-row">
         <div class="input-left">
           <!-- + attach button -->
-          <button class="add-btn" title="Attach file / options" onclick="document.getElementById('fileInput').click()">
+          <button class="add-btn" title="Attach file / options" onclick="openMediaPicker()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           <!-- Model pill -->
@@ -1007,6 +1147,42 @@ function enableSearch() {
   qc('Search the web for: latest AI developments 2025');
 }
 
+// ── Media Picker ────────────────────────────────────────────────────────────
+function openMediaPicker() {
+  const picker = document.getElementById('mediaPicker');
+  picker.classList.add('open');
+  // Sync web-search toggle state
+  const wsBtn = document.getElementById('wsToggleSheet');
+  const mainWs = document.getElementById('wsToggle');
+  if (wsBtn && mainWs) {
+    wsBtn.classList.toggle('off', !mainWs.checked && mainWs.getAttribute('aria-checked') !== 'true');
+  }
+}
+function closeMediaPicker(e) {
+  if (e.target === document.getElementById('mediaPicker')) {
+    document.getElementById('mediaPicker').classList.remove('open');
+  }
+}
+function openCamera() {
+  document.getElementById('mediaPicker').classList.remove('open');
+  document.getElementById('fileInputCamera').click();
+}
+function openPhotos() {
+  document.getElementById('mediaPicker').classList.remove('open');
+  document.getElementById('fileInputPhotos').click();
+}
+function openFiles() {
+  document.getElementById('mediaPicker').classList.remove('open');
+  document.getElementById('fileInputFiles').click();
+}
+function toggleWebSearchSheet() {
+  // Mirror the existing web-search toggle if present, otherwise just flip the button
+  const wsBtn = document.getElementById('wsToggleSheet');
+  wsBtn.classList.toggle('off');
+  const mainWs = document.getElementById('wsToggle');
+  if (mainWs) mainWs.click();
+}
+
 // ── File handling ──────────────────────────────────────────────────────────
 function handleFiles(files) {
   Array.from(files).forEach(file => {
@@ -1019,7 +1195,7 @@ function handleFiles(files) {
     };
     reader.readAsDataURL(file);
   });
-  document.getElementById('fileInput').value = '';
+  ['fileInputCamera','fileInputPhotos','fileInputFiles'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 function renderFileStrip() {
   const strip = document.getElementById('fileStrip');
