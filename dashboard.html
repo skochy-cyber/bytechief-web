@@ -1209,7 +1209,18 @@ function setUserDisplay(nameOrEmail) {
 }
 
 function getBestName() {
-  // 1. Try bc_user from storage
+  // 1. Decode JWT — always present, always has email at minimum
+  try {
+    const token = getToken();
+    if (token) {
+      // JWT uses base64url: replace - with + and _ with / before atob
+      const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(b64));
+      if (payload.name && payload.name.trim() && payload.name.trim() !== 'User') return payload.name.trim();
+      if (payload.email && payload.email.trim()) return payload.email.split('@')[0];
+    }
+  } catch {}
+  // 2. Try bc_user from storage as fallback
   try {
     const stored = sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user');
     if (stored) {
@@ -1218,22 +1229,14 @@ function getBestName() {
       if (u.email && u.email.trim()) return u.email.split('@')[0];
     }
   } catch {}
-  // 2. Decode JWT payload directly
-  try {
-    const token = getToken();
-    if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.name && payload.name.trim() && payload.name.trim() !== 'User') return payload.name.trim();
-      if (payload.email && payload.email.trim()) return payload.email.split('@')[0];
-    }
-  } catch {}
   return '';
 }
 
 function init() {
   const name = getBestName();
-  setUserDisplay(name || 'User');
-  mem.name = name || 'User';
+  const initName = name || 'Loading...';
+  setUserDisplay(initName);
+  mem.name = initName;
   // updateTTS called after all functions defined — see bottom of script
   loadMemory();
   renderSidebarRecents();
