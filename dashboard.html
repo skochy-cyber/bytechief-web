@@ -837,8 +837,18 @@ function init() {
   try {
     const raw = sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}';
     const u = JSON.parse(raw);
-    // Prefer name, fall back to email prefix, then 'User'
-    const d = (u.name && u.name.trim()) || (u.email ? u.email.split('@')[0] : '');
+    // Also try decoding the JWT payload (base64) for email if bc_user is stale
+    let email = u.email || '';
+    if (!email) {
+      try {
+        const token = getToken();
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          email = payload.email || '';
+        }
+      } catch {}
+    }
+    const d = (u.name && u.name.trim()) || (email ? email.split('@')[0] : 'User');
     setUserDisplay(d);
     mem.name = d;
   } catch {}
@@ -852,17 +862,18 @@ async function loadMemory() {
     const r = await fetch('/api/memory', { headers: { Authorization: 'Bearer ' + getToken() } });
     if (r.ok) {
       const d = await r.json();
-      // Update display name from server — most reliable source
-      if (d.name && d.name.trim()) {
-        setUserDisplay(d.name.trim());
-        mem.name = d.name.trim();
-      } else {
-        // Fall back to email from stored user object
-        try {
-          const u = JSON.parse(sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}');
-          if (u.email) setUserDisplay(u.email.split('@')[0]);
-        } catch {}
-      }
+      // Best name source: DB name → DB email prefix → stored token email → 'User'
+      const displayName = (d.name && d.name.trim())
+        || (d.email ? d.email.split('@')[0] : '')
+        || (req => {
+          try {
+            const u = JSON.parse(sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}');
+            return (u.name && u.name.trim()) || (u.email ? u.email.split('@')[0] : '');
+          } catch { return ''; }
+        })()
+        || 'User';
+      setUserDisplay(displayName);
+      mem.name = displayName;
       mem.contacts = d.memory?.contacts || {};
       mem.preferences = d.memory?.preferences || {};
       mem.facts = d.memory?.facts || [];
@@ -1146,7 +1157,7 @@ async function sendMessage() {
         method: 'POST',
         headers: {
           'Content-Type':  'application/json',
-          'Authorization': 'Bearer ' + (localStorage.getItem('bc_token') || '')
+          'Authorization': 'Bearer ' + getToken()
         },
         body: JSON.stringify({
           model:      MODEL,
