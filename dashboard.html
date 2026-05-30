@@ -1586,8 +1586,11 @@ async function sendMessage() {
   const typingEl = addTyping();
   let reply = '';
 
+  // Ping server to wake it up (Render free tier cold start can take 50s)
+  fetch('/api/health').catch(() => {});
+
   abortCtrl = new AbortController();
-  const timeoutId = setTimeout(() => abortCtrl.abort(), 30000); // 30s timeout
+  const timeoutId = setTimeout(() => abortCtrl.abort(), 60000); // 60s timeout for cold start
 
   try {
     const systemPrompt = buildSystemPrompt();
@@ -1623,9 +1626,11 @@ async function sendMessage() {
       console.log('[BC] Groq response status:', r.status);
       let data;
       try { data = await r.json(); } catch { throw new Error(`Groq error ${r.status}: invalid response`); }
-      console.log('[BC] Groq data:', JSON.stringify(data).slice(0,200));
+      const rawContent = data.choices?.[0]?.message?.content;
+      console.log('[BC] Groq data:', JSON.stringify(data).slice(0,300));
+      console.log('[BC] rawContent:', rawContent, '| finish_reason:', data.choices?.[0]?.finish_reason);
       if (!r.ok) throw new Error(data.error?.message || data.error || `Groq error ${r.status}`);
-      reply = (data.choices?.[0]?.message?.content || '').trim() || 'No response generated.';
+      reply = (rawContent || '').trim() || 'No response generated.';
 
     } else {
       // ── Anthropic ─────────────────────────────────────────────────────
