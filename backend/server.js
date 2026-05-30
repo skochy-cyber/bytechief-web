@@ -277,7 +277,7 @@ app.post('/api/groq', authMw, chatLimit, async (req, res) => {
 
   try {
     const groqAbort = new AbortController();
-    const groqTimeout = setTimeout(() => groqAbort.abort(), 25000);
+    const groqTimeout = setTimeout(() => groqAbort.abort(), 28000);
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       signal: groqAbort.signal,
@@ -288,7 +288,7 @@ app.post('/api/groq', authMw, chatLimit, async (req, res) => {
       body: JSON.stringify({
         model,
         messages,
-        max_tokens:  max_tokens  || 1024,
+        max_tokens:  max_tokens  || 800,
         temperature: temperature || 0.7,
         stream:      stream      || false,
       }),
