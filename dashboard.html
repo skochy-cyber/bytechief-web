@@ -140,6 +140,7 @@ body::before {
 .model-opt-icon.opus   { background:#f0eafe; color:#6b21a8; }
 .model-opt-icon.sonnet { background:var(--accent-bg); color:var(--accent); }
 .model-opt-icon.haiku  { background:#ecfdf5; color:#065f46; }
+.model-opt-icon.groq   { background:#fff7e6; color:#b45309; }
 .model-opt-body { flex:1; min-width:0; }
 .model-opt-name { font-size:.77rem; font-weight:600; color:var(--ink); }
 .model-opt-desc { font-size:.65rem; color:var(--ink3); margin-top:1px; }
@@ -150,6 +151,56 @@ body::before {
 .model-opt-tag.fast   { background:#ecfdf5; color:#065f46; }
 .model-opt-tag.smart  { background:var(--accent-bg); color:var(--accent); }
 .model-opt-tag.power  { background:#f0eafe; color:#6b21a8; }
+.model-opt-tag.free   { background:#fff7e6; color:#b45309; }
+
+/* Provider divider */
+.model-dropdown-divider {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 8px 5px; margin-top:3px;
+}
+.model-dropdown-divider::before,.model-dropdown-divider::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+.model-dropdown-divider span {
+  font-size:.57rem; font-weight:700; color:var(--ink4);
+  text-transform:uppercase; letter-spacing:.12em; white-space:nowrap;
+}
+
+/* Groq key modal */
+.key-modal-backdrop {
+  position:fixed; inset:0; background:rgba(15,14,11,.35);
+  backdrop-filter:blur(4px); z-index:500;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; visibility:hidden; transition:all .2s;
+}
+.key-modal-backdrop.open { opacity:1; visibility:visible; }
+.key-modal {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:18px; padding:24px; width:min(360px,90vw);
+  box-shadow:var(--shadow-xl);
+  transform:translateY(8px); transition:transform .2s;
+}
+.key-modal-backdrop.open .key-modal { transform:translateY(0); }
+.key-modal-title { font-size:.95rem; font-weight:700; color:var(--ink); margin-bottom:6px; }
+.key-modal-sub { font-size:.78rem; color:var(--ink3); line-height:1.6; margin-bottom:16px; }
+.key-modal-sub a { color:var(--accent); text-decoration:none; }
+.key-modal-sub a:hover { text-decoration:underline; }
+.key-input {
+  width:100%; padding:10px 12px; border:1px solid var(--border);
+  border-radius:10px; font-family:var(--mono); font-size:.78rem;
+  color:var(--ink); background:var(--off); outline:none; transition:border-color .15s;
+  margin-bottom:12px;
+}
+.key-input:focus { border-color:rgba(200,75,9,.4); }
+.key-modal-actions { display:flex; gap:8px; }
+.key-btn {
+  flex:1; padding:9px; border-radius:10px; font-family:var(--font);
+  font-size:.8rem; font-weight:600; cursor:pointer; border:none; transition:all .15s;
+}
+.key-btn.primary { background:var(--accent); color:#fff; }
+.key-btn.primary:hover { background:var(--accent2); }
+.key-btn.secondary { background:var(--off); border:1px solid var(--border); color:var(--ink3); }
+.key-btn.secondary:hover { border-color:var(--border2); color:var(--ink); }
 
 .topbar-right { display:flex; align-items:center; gap:8px; }
 .icon-btn {
@@ -550,6 +601,42 @@ body::before {
         </div>
         <span class="model-opt-tag fast">Fast</span>
       </div>
+
+      <!-- Groq section -->
+      <div class="model-dropdown-divider"><span>Groq — Free &amp; Fast</span></div>
+
+      <div class="model-option" data-model="llama-3.3-70b-versatile" data-label="Llama 3.3 70B" data-provider="groq" onclick="selectModel(this)">
+        <div class="model-opt-icon groq">Li</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Llama 3.3 70B</div>
+          <div class="model-opt-desc">Meta's best open model, very capable</div>
+        </div>
+        <span class="model-opt-tag free">Free</span>
+      </div>
+      <div class="model-option" data-model="llama-3.1-8b-instant" data-label="Llama 3.1 8B" data-provider="groq" onclick="selectModel(this)">
+        <div class="model-opt-icon groq">Li</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Llama 3.1 8B</div>
+          <div class="model-opt-desc">Ultra-fast, great for simple tasks</div>
+        </div>
+        <span class="model-opt-tag fast">Fast</span>
+      </div>
+      <div class="model-option" data-model="mixtral-8x7b-32768" data-label="Mixtral 8x7B" data-provider="groq" onclick="selectModel(this)">
+        <div class="model-opt-icon groq">Mx</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Mixtral 8x7B</div>
+          <div class="model-opt-desc">Mistral's MoE model, long context</div>
+        </div>
+        <span class="model-opt-tag free">Free</span>
+      </div>
+      <div class="model-option" data-model="gemma2-9b-it" data-label="Gemma 2 9B" data-provider="groq" onclick="selectModel(this)">
+        <div class="model-opt-icon groq">Gm</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Gemma 2 9B</div>
+          <div class="model-opt-desc">Google's efficient open model</div>
+        </div>
+        <span class="model-opt-tag free">Free</span>
+      </div>
     </div>
   </div>
   <div class="topbar-right">
@@ -712,12 +799,30 @@ body::before {
   </main>
 </div>
 
+<!-- GROQ KEY MODAL -->
+<div class="key-modal-backdrop" id="groqKeyModal">
+  <div class="key-modal">
+    <div class="key-modal-title">Enter your Groq API Key</div>
+    <div class="key-modal-sub">
+      Groq is free to use. Get your key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> — it only takes a minute.<br><br>
+      Your key is stored locally on your device only.
+    </div>
+    <input class="key-input" id="groqKeyInput" type="password" placeholder="gsk_..." spellcheck="false">
+    <div class="key-modal-actions">
+      <button class="key-btn secondary" onclick="cancelGroqKey()">Cancel</button>
+      <button class="key-btn primary" onclick="saveGroqKey()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toasts"></div>
 
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
-const API_URL = 'https://api.anthropic.com/v1/messages';
-let MODEL     = 'claude-sonnet-4-20250514';
+const API_URL      = 'https://api.anthropic.com/v1/messages';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+let MODEL    = 'claude-sonnet-4-20250514';
+let PROVIDER = 'anthropic'; // 'anthropic' | 'groq'
 let _blkId = 0;
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -815,16 +920,61 @@ function closeModelMenu() {
   document.getElementById('modelDropdown').classList.remove('open');
 }
 function selectModel(el) {
-  MODEL = el.dataset.model;
+  const newProvider = el.dataset.provider || 'anthropic';
+
+  // If switching to Groq, check for key first
+  if (newProvider === 'groq' && !localStorage.getItem('bc_groq_key')) {
+    // Store pending selection to apply after key is saved
+    window._pendingModelEl = el;
+    document.getElementById('groqKeyModal').classList.add('open');
+    document.getElementById('groqKeyInput').focus();
+    closeModelMenu();
+    return;
+  }
+
+  applyModelSelection(el);
+}
+
+function applyModelSelection(el) {
+  MODEL    = el.dataset.model;
+  PROVIDER = el.dataset.provider || 'anthropic';
   const label = el.dataset.label;
   document.getElementById('modelLabel').textContent = label;
   document.querySelectorAll('.model-option').forEach(o => o.classList.remove('active'));
   el.classList.add('active');
   closeModelMenu();
   toast(`Model: ${label}`, 'inf');
-  // Clear history when switching models to avoid context confusion
   history = [];
 }
+
+// ── Groq key modal ─────────────────────────────────────────────────────────
+function saveGroqKey() {
+  const key = document.getElementById('groqKeyInput').value.trim();
+  if (!key.startsWith('gsk_') || key.length < 20) {
+    toast('Invalid key — must start with gsk_', 'err'); return;
+  }
+  localStorage.setItem('bc_groq_key', key);
+  document.getElementById('groqKeyModal').classList.remove('open');
+  document.getElementById('groqKeyInput').value = '';
+  if (window._pendingModelEl) {
+    applyModelSelection(window._pendingModelEl);
+    window._pendingModelEl = null;
+  }
+  toast('Groq connected', 'ok');
+}
+
+function cancelGroqKey() {
+  document.getElementById('groqKeyModal').classList.remove('open');
+  document.getElementById('groqKeyInput').value = '';
+  window._pendingModelEl = null;
+}
+
+// Allow Enter key in key input
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('groqKeyModal').classList.contains('open')) {
+    saveGroqKey();
+  }
+});
 // Close on outside click
 document.addEventListener('click', e => {
   if (!document.getElementById('modelSwitcher').contains(e.target)) closeModelMenu();
@@ -986,38 +1136,79 @@ async function sendMessage() {
 
   try {
     const systemPrompt = buildSystemPrompt();
-    const tools = webSearch ? [{ type: 'web_search_20250305', name: 'web_search' }] : undefined;
-    const body = {
-      model: MODEL,
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: msgHistory.slice(-20),
-      ...(tools ? { tools } : {})
-    };
+    let reply = '';
 
-    const r = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': '',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify(body)
-    });
+    if (PROVIDER === 'groq') {
+      // ── Groq (OpenAI-compatible) ──────────────────────────────────────
+      const groqKey = localStorage.getItem('bc_groq_key');
+      if (!groqKey) { throw new Error('No Groq API key. Switch model to re-enter your key.'); }
 
-    typingEl.remove();
+      const groqMessages = [
+        { role: 'system', content: systemPrompt },
+        ...msgHistory.slice(-20).map(m => ({
+          role: m.role,
+          content: Array.isArray(m.content)
+            ? m.content.filter(b => b.type === 'text').map(b => b.text).join('\n')
+            : m.content
+        }))
+      ];
 
-    // IMPORTANT: Do NOT logout on API errors — only the explicit logout button should do that.
-    // 401 from Anthropic API means invalid API key, not invalid session.
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error?.message || `API error ${r.status}`);
+      const r = await fetch(GROQ_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + groqKey
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: 4096,
+          messages: groqMessages
+        })
+      });
 
-    let reply = data.content
-      .filter(b => b.type === 'text')
-      .map(b => b.text)
-      .join('\n');
-    if (!reply) reply = 'No response generated.';
+      typingEl.remove();
+      const data = await r.json();
+      if (!r.ok) {
+        if (r.status === 401) {
+          localStorage.removeItem('bc_groq_key');
+          throw new Error('Invalid Groq API key. Switch model to re-enter it.');
+        }
+        throw new Error(data.error?.message || `Groq API error ${r.status}`);
+      }
+      reply = data.choices?.[0]?.message?.content || 'No response generated.';
+
+    } else {
+      // ── Anthropic ─────────────────────────────────────────────────────
+      const tools = webSearch ? [{ type: 'web_search_20250305', name: 'web_search' }] : undefined;
+      const body = {
+        model: MODEL,
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: msgHistory.slice(-20),
+        ...(tools ? { tools } : {})
+      };
+
+      const r = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': '',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify(body)
+      });
+
+      typingEl.remove();
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error?.message || `API error ${r.status}`);
+
+      reply = data.content
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n');
+      if (!reply) reply = 'No response generated.';
+    }
 
     let imageUrl = null;
     const imgMatch = reply.match(/\[IMAGE:\s*(.+?)\]/i);
