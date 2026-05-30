@@ -1039,6 +1039,7 @@ let _blkId = 0;
 // ── State ──────────────────────────────────────────────────────────────────
 let history      = [];
 let busy         = false;
+let abortCtrl    = null;
 let ttsOn        = localStorage.getItem('bc_tts') === '1';
 let webSearch    = false;
 let pendingFiles = [];
@@ -1122,6 +1123,7 @@ function loadChatSession(id) {
     if (!raw) return;
     const data = JSON.parse(raw);
     // Clear current UI
+    if (abortCtrl) { abortCtrl.abort(); abortCtrl = null; }
     busy = false;
     const btn = document.getElementById('sendBtn');
     if (btn) btn.disabled = false;
@@ -1162,6 +1164,7 @@ function renderSidebarRecents() {
 }
 
 function newChat() {
+  if (abortCtrl) { abortCtrl.abort(); abortCtrl = null; }
   saveActiveChat();
   history = [];
   activeChatId = null;
@@ -1583,6 +1586,9 @@ async function sendMessage() {
   const typingEl = addTyping();
   let reply = '';
 
+  abortCtrl = new AbortController();
+  const timeoutId = setTimeout(() => abortCtrl.abort(), 30000); // 30s timeout
+
   try {
     const systemPrompt = buildSystemPrompt();
 
@@ -1600,13 +1606,14 @@ async function sendMessage() {
 
       const r = await fetch('/api/groq', {
         method: 'POST',
+        signal: abortCtrl.signal,
         headers: {
           'Content-Type':  'application/json',
           'Authorization': 'Bearer ' + getToken()
         },
         body: JSON.stringify({
           model:      MODEL,
-          max_tokens: 4096,
+          max_tokens: 2048,
           messages:   groqMessages
         })
       });
@@ -1630,6 +1637,7 @@ async function sendMessage() {
 
       const r = await fetch(API_URL, {
         method: 'POST',
+        signal: abortCtrl.signal,
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': '',
@@ -1671,10 +1679,16 @@ async function sendMessage() {
 
   } catch (e) {
     typingEl?.remove();
-    const errMsg = e.message || 'Something went wrong. Please try again.';
-    addMessage('in', errMsg);
+    if (e.name === 'AbortError') {
+      addMessage('in', 'Request timed out. The server may be starting up — please try again.');
+    } else {
+      const errMsg = e.message || 'Something went wrong. Please try again.';
+      addMessage('in', errMsg);
+    }
     console.error('ByteChief error:', e);
   } finally {
+    clearTimeout(timeoutId);
+    abortCtrl = null;
     busy = false;
     document.getElementById('sendBtn').disabled = false;
   }
