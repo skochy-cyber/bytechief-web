@@ -802,36 +802,6 @@ body::before {
     <div class="avatar-pill" onclick="logout()">
       <div class="av-circle" id="uav">?</div>
       <span class="av-name" id="uname">User</span>
-      <script>
-        // Runs immediately — set name before page renders
-        (function(){
-          try {
-            // Try flat key first (fastest)
-            var n = sessionStorage.getItem('bc_name') || localStorage.getItem('bc_name');
-            var e = sessionStorage.getItem('bc_email') || localStorage.getItem('bc_email');
-            // Try bc_user JSON
-            if (!n) {
-              var s = sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user');
-              if (s) { var u = JSON.parse(s); n = u.name; e = u.email; }
-            }
-            // Try JWT
-            if (!n) {
-              var t = sessionStorage.getItem('bc_token') || localStorage.getItem('bc_token');
-              if (t) {
-                var b = t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-                while(b.length%4) b+='=';
-                var p = JSON.parse(atob(b));
-                n = p.name; e = p.email;
-              }
-            }
-            var display = (n && n.trim() && n.trim().toLowerCase()!=='user') ? n.trim() : (e ? e.split('@')[0] : '');
-            if (display) {
-              document.getElementById('uav').textContent = display[0].toUpperCase();
-              document.getElementById('uname').textContent = display;
-            }
-          } catch(err) {}
-        })();
-      </script>
     </div>
   </div>
 </header>
@@ -1053,6 +1023,34 @@ body::before {
 <div class="toast-wrap" id="toasts"></div>
 
 <script>
+// ── Set name immediately before anything renders ───────────────────────────
+(function setNameEarly() {
+  try {
+    var n = sessionStorage.getItem('bc_name') || localStorage.getItem('bc_name') || '';
+    var e = sessionStorage.getItem('bc_email') || localStorage.getItem('bc_email') || '';
+    if (!n) {
+      try { var u = JSON.parse(sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}'); n = u.name||''; e = u.email||e; } catch(ex){}
+    }
+    if (!n) {
+      try {
+        var t = sessionStorage.getItem('bc_token') || localStorage.getItem('bc_token') || '';
+        if (t) { var b=t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'); while(b.length%4)b+='='; var p=JSON.parse(atob(b)); n=p.name||''; e=p.email||e; }
+      } catch(ex){}
+    }
+    var d = (n && n.trim() && n.trim().toLowerCase()!=='user') ? n.trim() : (e ? e.split('@')[0] : '');
+    if (d) { var ua=document.getElementById('uav'); var un=document.getElementById('uname'); if(ua)ua.textContent=d[0].toUpperCase(); if(un)un.textContent=d; }
+  } catch(ex) {}
+})();
+
+// ── Force Groq as provider (remove any saved Anthropic provider) ───────────
+(function forceGroq() {
+  var saved = localStorage.getItem('bc_provider');
+  if (saved && saved !== 'groq') {
+    localStorage.setItem('bc_provider', 'groq');
+    localStorage.setItem('bc_model', 'llama-3.3-70b-versatile');
+  }
+})();
+
 // ── Constants ──────────────────────────────────────────────────────────────
 const API_URL      = 'https://api.anthropic.com/v1/messages';
 let MODEL    = localStorage.getItem('bc_model') || 'llama-3.3-70b-versatile';
