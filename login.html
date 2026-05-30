@@ -713,13 +713,19 @@ function saveSession(token, user, remember) {
   const safeUser = { ...user, name: resolvedName };
   sessionStorage.setItem('bc_token', token);
   sessionStorage.setItem('bc_user',  JSON.stringify(safeUser));
+  sessionStorage.setItem('bc_name',  safeUser.name || '');
+  sessionStorage.setItem('bc_email', safeUser.email || '');
   if(remember){
     localStorage.setItem('bc_token', token);
     localStorage.setItem('bc_user',  JSON.stringify(safeUser));
+    localStorage.setItem('bc_name',  safeUser.name || '');
+    localStorage.setItem('bc_email', safeUser.email || '');
     localStorage.setItem('bc_remember', '1');
   } else {
     localStorage.removeItem('bc_token');
     localStorage.removeItem('bc_user');
+    localStorage.removeItem('bc_name');
+    localStorage.removeItem('bc_email');
     localStorage.removeItem('bc_remember');
   }
 }
