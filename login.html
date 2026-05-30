@@ -737,7 +737,8 @@ function getToken(){
       const me = await r.json();
       sessionStorage.setItem('bc_token', token);
       // Always refresh bc_user with latest data from server
-      const userObj = { email: me.email || '', name: me.name || '', role: me.role || 'user' };
+      const resolvedName = (me.name && me.name.trim()) ? me.name.trim() : (me.email ? me.email.split('@')[0] : 'User');
+      const userObj = { email: me.email || '', name: resolvedName, role: me.role || 'user' };
       sessionStorage.setItem('bc_user', JSON.stringify(userObj));
       if(localStorage.getItem('bc_remember')) localStorage.setItem('bc_user', JSON.stringify(userObj));
       window.location.replace('dashboard.html');
