@@ -102,18 +102,18 @@ body::before {
 .model-badge.open .model-badge-chevron { transform:rotate(180deg); }
 
 .model-dropdown {
-  position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%);
+  position:fixed;
   background:var(--white); border:1px solid var(--border);
   border-radius:14px; padding:6px;
   box-shadow:var(--shadow-xl);
-  min-width:260px; z-index:200;
+  min-width:260px; z-index:9999;
   opacity:0; visibility:hidden; pointer-events:none;
-  transform:translateX(-50%) translateY(-6px);
   transition:opacity .18s, transform .18s, visibility .18s;
+  transform:translateY(6px);
 }
 .model-dropdown.open {
   opacity:1; visibility:visible; pointer-events:all;
-  transform:translateX(-50%) translateY(0);
+  transform:translateY(0);
 }
 .model-dropdown-header {
   font-size:.58rem; font-weight:700; color:var(--ink4);
@@ -610,74 +610,12 @@ body::before {
   </div>
   <!-- MODEL SWITCHER -->
   <div class="model-switcher" id="modelSwitcher">
-    <div class="model-badge" id="modelBadge" onclick="toggleModelMenu()">
+    <div class="model-badge" id="modelBadge" onclick="toggleModelMenu(this)">
       <svg class="model-badge-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
       <span id="modelLabel">Sonnet 4</span>
       <svg class="model-badge-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
-    <div class="model-dropdown" id="modelDropdown">
-      <div class="model-dropdown-header">Choose model</div>
-      <div class="model-option" data-model="claude-opus-4-5" data-label="Opus 4" onclick="selectModel(this)">
-        <div class="model-opt-icon opus">Op</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Claude Opus 4</div>
-          <div class="model-opt-desc">Most powerful, complex tasks</div>
-        </div>
-        <span class="model-opt-tag power">Power</span>
-      </div>
-      <div class="model-option active" data-model="claude-sonnet-4-20250514" data-label="Sonnet 4" onclick="selectModel(this)">
-        <div class="model-opt-icon sonnet">So</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Claude Sonnet 4</div>
-          <div class="model-opt-desc">Smart and fast, great for most tasks</div>
-        </div>
-        <span class="model-opt-tag smart">Default</span>
-      </div>
-      <div class="model-option" data-model="claude-haiku-4-5-20251001" data-label="Haiku 4" onclick="selectModel(this)">
-        <div class="model-opt-icon haiku">Ha</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Claude Haiku 4</div>
-          <div class="model-opt-desc">Fastest, ideal for quick answers</div>
-        </div>
-        <span class="model-opt-tag fast">Fast</span>
-      </div>
-
-      <!-- Groq section -->
-      <div class="model-dropdown-divider"><span>Groq — Free &amp; Fast</span></div>
-
-      <div class="model-option" data-model="llama-3.3-70b-versatile" data-label="Llama 3.3 70B" data-provider="groq" onclick="selectModel(this)">
-        <div class="model-opt-icon groq">Li</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Llama 3.3 70B</div>
-          <div class="model-opt-desc">Meta's best open model, very capable</div>
-        </div>
-        <span class="model-opt-tag free">Free</span>
-      </div>
-      <div class="model-option" data-model="llama-3.1-8b-instant" data-label="Llama 3.1 8B" data-provider="groq" onclick="selectModel(this)">
-        <div class="model-opt-icon groq">Li</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Llama 3.1 8B</div>
-          <div class="model-opt-desc">Ultra-fast, great for simple tasks</div>
-        </div>
-        <span class="model-opt-tag fast">Fast</span>
-      </div>
-      <div class="model-option" data-model="mixtral-8x7b-32768" data-label="Mixtral 8x7B" data-provider="groq" onclick="selectModel(this)">
-        <div class="model-opt-icon groq">Mx</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Mixtral 8x7B</div>
-          <div class="model-opt-desc">Mistral's MoE model, long context</div>
-        </div>
-        <span class="model-opt-tag free">Free</span>
-      </div>
-      <div class="model-option" data-model="gemma2-9b-it" data-label="Gemma 2 9B" data-provider="groq" onclick="selectModel(this)">
-        <div class="model-opt-icon groq">Gm</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Gemma 2 9B</div>
-          <div class="model-opt-desc">Google's efficient open model</div>
-        </div>
-        <span class="model-opt-tag free">Free</span>
-      </div>
-    </div>
+    
   </div>
   <div class="topbar-right">
     <button class="icon-btn" id="ttsBtn" onclick="toggleTTS()" title="Text to Speech">
@@ -824,7 +762,7 @@ body::before {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           <!-- Model pill -->
-          <button class="model-pill" id="modelPill" onclick="toggleModelMenu()">
+          <button class="model-pill" id="modelPill" onclick="toggleModelMenu(this)">
             <span id="modelPillLabel">Sonnet 4.6</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
@@ -964,15 +902,38 @@ function renderMemory() {
 }
 
 // ── Model switcher ─────────────────────────────────────────────────────────
-function toggleModelMenu() {
-  const badge    = document.getElementById('modelBadge');
+function toggleModelMenu(trigger) {
   const dropdown = document.getElementById('modelDropdown');
+  const badge    = document.getElementById('modelBadge');
   const isOpen   = dropdown.classList.contains('open');
-  if (isOpen) { closeModelMenu(); } else { badge.classList.add('open'); dropdown.classList.add('open'); }
+  if (isOpen) { closeModelMenu(); return; }
+
+  // Determine anchor: pill in input bar takes priority, else header badge
+  const anchor = trigger || document.getElementById('modelPill') || badge;
+  const rect   = anchor.getBoundingClientRect();
+  const ddW    = 260;
+
+  // Position above the anchor
+  let left = rect.left;
+  let top  = rect.top - 8; // will subtract dropdown height after open
+
+  dropdown.style.left    = Math.max(8, Math.min(left, window.innerWidth - ddW - 8)) + 'px';
+  dropdown.style.top     = '0px'; // temporary
+  dropdown.style.visibility = 'hidden';
+  dropdown.classList.add('open');
+
+  // Now we know the height — position it above
+  const ddH = dropdown.offsetHeight;
+  dropdown.style.top  = Math.max(8, rect.top - ddH - 8) + 'px';
+  dropdown.style.visibility = '';
+
+  if (badge) badge.classList.add('open');
 }
 function closeModelMenu() {
-  document.getElementById('modelBadge').classList.remove('open');
-  document.getElementById('modelDropdown').classList.remove('open');
+  const badge    = document.getElementById('modelBadge');
+  const dropdown = document.getElementById('modelDropdown');
+  if (badge)    badge.classList.remove('open');
+  if (dropdown) dropdown.classList.remove('open');
 }
 function selectModel(el) {
   const newProvider = el.dataset.provider || 'anthropic';
@@ -1034,7 +995,15 @@ document.addEventListener('keydown', e => {
 });
 // Close on outside click
 document.addEventListener('click', e => {
-  if (!document.getElementById('modelSwitcher').contains(e.target)) closeModelMenu();
+  const pill = document.getElementById('modelPill');
+  const dd   = document.getElementById('modelDropdown');
+  const sw   = document.getElementById('modelSwitcher');
+  if (
+    (sw && sw.contains(e.target)) ||
+    (pill && pill.contains(e.target)) ||
+    (dd && dd.contains(e.target))
+  ) return;
+  closeModelMenu();
 });
 
 // ── Sidebar ────────────────────────────────────────────────────────────────
@@ -1475,5 +1444,69 @@ function toast(msg, type = '') {
   setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(10px)'; t.style.transition = 'all .3s'; setTimeout(() => t.remove(), 300); }, 2600);
 }
 </script>
+
+<div class="model-dropdown" id="modelDropdown">
+      <div class="model-dropdown-header">Choose model</div>
+      <div class="model-option" data-model="claude-opus-4-5" data-label="Opus 4" onclick="selectModel(this)">
+        <div class="model-opt-icon opus">Op</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Claude Opus 4</div>
+          <div class="model-opt-desc">Most powerful, complex tasks</div>
+        </div>
+        <span class="model-opt-tag power">Power</span>
+      </div>
+      <div class="model-option active" data-model="claude-sonnet-4-20250514" data-label="Sonnet 4" onclick="selectModel(this)">
+        <div class="model-opt-icon sonnet">So</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Claude Sonnet 4</div>
+          <div class="model-opt-desc">Smart and fast, great for most tasks</div>
+        </div>
+        <span class="model-opt-tag smart">Default</span>
+      </div>
+      <div class="model-option" data-model="claude-haiku-4-5-20251001" data-label="Haiku 4" onclick="selectModel(this)">
+        <div class="model-opt-icon haiku">Ha</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Claude Haiku 4</div>
+          <div class="model-opt-desc">Fastest, ideal for quick answers</div>
+        </div>
+        <span class="model-opt-tag fast">Fast</span>
+      </div>
+
+      <!-- Groq section -->
+      <div class="model-dropdown-divider"><span>Groq — Free &amp; Fast</span></div>
+
+      <div class="model-option" data-model="llama-3.3-70b-versatile" data-label="Llama 3.3 70B" data-provider="groq" onclick="selectModel(this)">
+        <div class="model-opt-icon groq">Li</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Llama 3.3 70B</div>
+          <div class="model-opt-desc">Meta's best open model, very capable</div>
+        </div>
+        <span class="model-opt-tag free">Free</span>
+      </div>
+      <div class="model-option" data-model="llama-3.1-8b-instant" data-label="Llama 3.1 8B" data-provider="groq" onclick="selectModel(this)">
+        <div class="model-opt-icon groq">Li</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Llama 3.1 8B</div>
+          <div class="model-opt-desc">Ultra-fast, great for simple tasks</div>
+        </div>
+        <span class="model-opt-tag fast">Fast</span>
+      </div>
+      <div class="model-option" data-model="mixtral-8x7b-32768" data-label="Mixtral 8x7B" data-provider="groq" onclick="selectModel(this)">
+        <div class="model-opt-icon groq">Mx</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Mixtral 8x7B</div>
+          <div class="model-opt-desc">Mistral's MoE model, long context</div>
+        </div>
+        <span class="model-opt-tag free">Free</span>
+      </div>
+      <div class="model-option" data-model="gemma2-9b-it" data-label="Gemma 2 9B" data-provider="groq" onclick="selectModel(this)">
+        <div class="model-opt-icon groq">Gm</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Gemma 2 9B</div>
+          <div class="model-opt-desc">Google's efficient open model</div>
+        </div>
+        <span class="model-opt-tag free">Free</span>
+      </div>
+    </div>
 </body>
 </html>
