@@ -363,7 +363,7 @@ body::before {
 .msgs {
   flex:1; overflow-y:auto; overflow-x:hidden;
   padding:20px 16px 8px;
-  display:flex; flex-direction:column; gap:14px;
+  display:flex; flex-direction:column; gap:4px;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-y:contain;
   scroll-behavior:smooth;
@@ -374,7 +374,7 @@ body::before {
 .msgs::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
 
 /* Message rows */
-.msg-row { display:flex; gap:10px; animation:msgIn .2s ease; min-width:0; }
+.msg-row { display:flex; gap:8px; animation:msgIn .2s ease; min-width:0; align-items:flex-start; }
 @keyframes msgIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
 .msg-row.out { align-self:flex-end; flex-direction:row-reverse; max-width:82%; }
 .msg-row.in  { align-self:flex-start; max-width:100%; width:100%; }
@@ -382,11 +382,9 @@ body::before {
   .msg-row.out { max-width:90%; }
 }
 
-.av { flex:0 0 28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-top:2px; flex-shrink:0; }
-.av.ai  { background:linear-gradient(135deg,var(--accent),var(--accent2)); }
-.av.usr { background:var(--off2); border:1px solid var(--border); }
-.av svg { width:14px; height:14px; color:#fff; }
-.av.usr svg { color:var(--ink3); }
+.av { flex:0 0 22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-top:3px; flex-shrink:0; }
+.av.ai  { background:none; }
+.av.ai svg { width:20px; height:20px; color:var(--accent); }
 
 .bubble {
   padding:11px 15px; border-radius:16px;
@@ -1038,18 +1036,39 @@ let mem          = { name: '', contacts: {}, preferences: {}, facts: [] };
 let voiceRec     = null;
 let isRecording  = false;
 
-// ── Chat History (localStorage) ───────────────────────────────────────────
-const CHATS_KEY    = 'bc_chats';    // index: [{id, title, ts}]
-const CHAT_PRE     = 'bc_chat_';    // bc_chat_<id>: {history:[...], messages:[{type,text,imageUrl}]}
-let activeChatId   = null;
+// ── Chat History (localStorage, per-user namespaced) ──────────────────────
+// Keys are namespaced by a stable user ID derived from the JWT so chats
+// survive logout/login for the same user and never bleed across accounts.
+let activeChatId = null;
+
+function getUserKey() {
+  // Extract a stable ID from the stored token — never cleared on logout
+  try {
+    const token = localStorage.getItem('bc_token') || sessionStorage.getItem('bc_token') || '';
+    if (token) {
+      const p = JSON.parse(atob(token.split('.')[1]));
+      const uid = p.sub || p.id || p._id || p.email || 'default';
+      let h = 0;
+      for (let i = 0; i < uid.length; i++) { h = ((h << 5) - h + uid.charCodeAt(i)) | 0; }
+      const key = 'u' + Math.abs(h).toString(36);
+      localStorage.setItem('bc_last_ukey', key); // always refresh the snapshot
+      return key;
+    }
+  } catch {}
+  // Fallback: use the last known key so chats survive a token-cleared logout
+  return localStorage.getItem('bc_last_ukey') || 'default';
+}
+
+function getCHATS_KEY()  { return 'bc_chats_' + getUserKey(); }
+function getCHAT_PRE()   { return 'bc_chat_'  + getUserKey() + '_'; }
 
 function genChatId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 function getChatIndex() {
-  try { return JSON.parse(localStorage.getItem(CHATS_KEY) || '[]'); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(getCHATS_KEY()) || '[]'); } catch { return []; }
 }
 function saveChatIndex(index) {
-  localStorage.setItem(CHATS_KEY, JSON.stringify(index));
+  localStorage.setItem(getCHATS_KEY(), JSON.stringify(index));
 }
 
 function saveActiveChat() {
@@ -1066,7 +1085,7 @@ function saveActiveChat() {
     msgs.push({ type, text, imageUrl: img ? img.src : null });
   });
   const data = { history, messages: msgs };
-  localStorage.setItem(CHAT_PRE + activeChatId, JSON.stringify(data));
+  localStorage.setItem(getCHAT_PRE() + activeChatId, JSON.stringify(data));
 }
 
 function startNewChatSession(title) {
@@ -1089,7 +1108,7 @@ function updateActiveChatTitle(title) {
 
 function loadChatSession(id) {
   try {
-    const raw = localStorage.getItem(CHAT_PRE + id);
+    const raw = localStorage.getItem(getCHAT_PRE() + id);
     if (!raw) return;
     const data = JSON.parse(raw);
     // Clear current UI
@@ -1106,7 +1125,7 @@ function loadChatSession(id) {
 }
 
 function deleteChatSession(id) {
-  localStorage.removeItem(CHAT_PRE + id);
+  localStorage.removeItem(getCHAT_PRE() + id);
   const index = getChatIndex().filter(c => c.id !== id);
   saveChatIndex(index);
   renderSidebarRecents();
@@ -1149,12 +1168,22 @@ const getToken = () => sessionStorage.getItem('bc_token') || localStorage.getIte
 if (!getToken()) location.replace('login.html');
 
 function logout() {
-  ['bc_token','bc_user','bc_remember'].forEach(k => {
-    localStorage.removeItem(k);
-    sessionStorage.removeItem(k);
-  });
+  // Before clearing anything, snapshot the user key into localStorage
+  // so that on next login the same user still finds their namespaced chats.
+  try {
+    const key = getUserKey();
+    if (key && key !== 'default') localStorage.setItem('bc_last_ukey', key);
+  } catch {}
+  sessionStorage.removeItem('bc_token');
+  sessionStorage.removeItem('bc_user');
+  sessionStorage.removeItem('bc_remember');
+  if (!localStorage.getItem('bc_remember')) {
+    localStorage.removeItem('bc_token');
+    localStorage.removeItem('bc_user');
+  }
   location.href = 'login.html';
 }
+
 
 // ── Init ───────────────────────────────────────────────────────────────────
 function setUserDisplay(nameOrEmail) {
@@ -1684,7 +1713,7 @@ function addMessage(type, text, imageUrl = null, files = []) {
     // AI: small avatar + content
     const av = document.createElement('div');
     av.className = 'av ai';
-    av.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+    av.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c-.28 0-.5.22-.5.5v7.09L6.27 4.77a.5.5 0 0 0-.78.62L9.7 12H3a.5.5 0 0 0 0 1h6.7l-4.2 6.61a.5.5 0 0 0 .77.62L11.5 13.9V21a.5.5 0 0 0 1 0v-7.09l5.22 5.32a.5.5 0 0 0 .78-.62L14.3 13H21a.5.5 0 0 0 0-1h-6.7l4.2-6.61a.5.5 0 0 0-.77-.62L12.5 10.1V3a.5.5 0 0 0-.5-.5z"/></svg>';
     row.appendChild(av);
     row.appendChild(col);
   } else {
@@ -1701,7 +1730,7 @@ function addTyping() {
   const row = document.createElement('div');
   row.className = 'typing-row';
   row.innerHTML = `
-    <div class="av ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+    <div class="av ai"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5c-.28 0-.5.22-.5.5v7.09L6.27 4.77a.5.5 0 0 0-.78.62L9.7 12H3a.5.5 0 0 0 0 1h6.7l-4.2 6.61a.5.5 0 0 0 .77.62L11.5 13.9V21a.5.5 0 0 0 1 0v-7.09l5.22 5.32a.5.5 0 0 0 .78-.62L14.3 13H21a.5.5 0 0 0 0-1h-6.7l4.2-6.61a.5.5 0 0 0-.77-.62L12.5 10.1V3a.5.5 0 0 0-.5-.5z"/></svg></div>
     <div class="bubble" style="background:transparent;border:none;padding:2px 0;">
       <div class="typing-dots"><span></span><span></span><span></span></div>
     </div>`;
