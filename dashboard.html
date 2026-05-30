@@ -1555,10 +1555,10 @@ async function sendMessage() {
   pendingFiles = []; renderFileStrip();
 
   const typingEl = addTyping();
+  let reply = '';
 
   try {
     const systemPrompt = buildSystemPrompt();
-    let reply = '';
 
     if (PROVIDER === 'groq') {
       // ── Groq via backend proxy (key stored server-side in .env) ──────
@@ -1589,7 +1589,7 @@ async function sendMessage() {
       let data;
       try { data = await r.json(); } catch { throw new Error(`Groq error ${r.status}: invalid response`); }
       if (!r.ok) throw new Error(data.error?.message || data.error || `Groq error ${r.status}`);
-      reply = data.choices?.[0]?.message?.content || 'No response generated.';
+      reply = (data.choices?.[0]?.message?.content || '').trim() || 'No response generated.';
 
     } else {
       // ── Anthropic ─────────────────────────────────────────────────────
@@ -1645,7 +1645,9 @@ async function sendMessage() {
 
   } catch (e) {
     typingEl?.remove();
-    addMessage('in', e.message || 'Something went wrong. Please try again.');
+    const errMsg = e.message || 'Something went wrong. Please try again.';
+    addMessage('in', '⚠️ ' + errMsg);
+    console.error('ByteChief error:', e);
   } finally {
     busy = false;
     document.getElementById('sendBtn').disabled = false;
