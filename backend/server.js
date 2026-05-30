@@ -105,7 +105,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..')));
 
 const apiLimiter = rateLimit({ windowMs: 15*60*1000, max: 500, message: { error: 'Too many requests' } });
-const chatLimit  = rateLimit({ windowMs:  1*60*1000, max:  30, message: { error: 'Slow down — too many messages' } });
+const chatLimit  = rateLimit({ windowMs:  1*60*1000, max:  60, keyGenerator: (req) => req.user?.id || req.ip, message: { error: 'Slow down — too many messages' } });
 app.use('/api/', apiLimiter);
 
 const authMw = (req, res, next) => {
@@ -276,8 +276,11 @@ app.post('/api/groq', authMw, chatLimit, async (req, res) => {
   if (!model || !messages) return res.status(400).json({ error: 'model and messages required' });
 
   try {
+    const groqAbort = new AbortController();
+    const groqTimeout = setTimeout(() => groqAbort.abort(), 25000);
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
+      signal: groqAbort.signal,
       headers: {
         'Content-Type':  'application/json',
         'Authorization': `Bearer ${GROQ_KEY}`,
@@ -291,11 +294,13 @@ app.post('/api/groq', authMw, chatLimit, async (req, res) => {
       }),
     });
 
+    clearTimeout(groqTimeout);
     const data = await groqRes.json();
     if (!groqRes.ok) return res.status(groqRes.status).json({ error: data?.error?.message || 'Groq error' });
     res.json(data);
   } catch (e) {
-    res.status(500).json({ error: 'Groq proxy failed: ' + e.message });
+    const msg = e.name === 'AbortError' ? 'Groq request timed out' : ('Groq proxy failed: ' + e.message);
+    res.status(500).json({ error: msg });
   }
 });
 
