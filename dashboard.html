@@ -81,14 +81,75 @@ body::before {
 }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.5;transform:scale(1.3);} }
 
+/* ── MODEL SWITCHER ── */
+.model-switcher { position:relative; }
 .model-badge {
   display:flex; align-items:center; gap:5px;
   background:var(--accent-bg); border:1px solid var(--accent-border);
-  border-radius:20px; padding:3px 10px;
+  border-radius:20px; padding:4px 11px 4px 9px;
   font-size:.67rem; font-weight:600; color:var(--accent);
-  letter-spacing:.02em;
+  letter-spacing:.02em; cursor:pointer;
+  transition:all .15s; user-select:none;
+  white-space:nowrap;
 }
-.model-badge svg { width:11px; height:11px; }
+.model-badge:hover { background:var(--off2); border-color:var(--border2); }
+.model-badge.open { background:var(--white); border-color:var(--border2); box-shadow:var(--shadow); }
+.model-badge-icon { width:12px; height:12px; flex-shrink:0; }
+.model-badge-chevron {
+  width:11px; height:11px; flex-shrink:0;
+  transition:transform .2s; color:var(--ink4);
+}
+.model-badge.open .model-badge-chevron { transform:rotate(180deg); }
+
+.model-dropdown {
+  position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%);
+  background:var(--white); border:1px solid var(--border);
+  border-radius:14px; padding:6px;
+  box-shadow:var(--shadow-xl);
+  min-width:260px; z-index:200;
+  opacity:0; visibility:hidden; pointer-events:none;
+  transform:translateX(-50%) translateY(-6px);
+  transition:opacity .18s, transform .18s, visibility .18s;
+}
+.model-dropdown.open {
+  opacity:1; visibility:visible; pointer-events:all;
+  transform:translateX(-50%) translateY(0);
+}
+.model-dropdown-header {
+  font-size:.58rem; font-weight:700; color:var(--ink4);
+  text-transform:uppercase; letter-spacing:.12em;
+  padding:5px 8px 7px; border-bottom:1px solid var(--border);
+  margin-bottom:5px;
+}
+.model-option {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 10px; border-radius:9px; cursor:pointer;
+  transition:background .12s; position:relative;
+}
+.model-option:hover { background:var(--off); }
+.model-option.active { background:var(--accent-bg); }
+.model-option.active::after {
+  content:''; position:absolute; right:10px; top:50%; transform:translateY(-50%);
+  width:7px; height:7px; border-radius:50%; background:var(--accent);
+}
+.model-opt-icon {
+  width:30px; height:30px; border-radius:8px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.7rem; font-weight:700; font-family:var(--font);
+}
+.model-opt-icon.opus   { background:#f0eafe; color:#6b21a8; }
+.model-opt-icon.sonnet { background:var(--accent-bg); color:var(--accent); }
+.model-opt-icon.haiku  { background:#ecfdf5; color:#065f46; }
+.model-opt-body { flex:1; min-width:0; }
+.model-opt-name { font-size:.77rem; font-weight:600; color:var(--ink); }
+.model-opt-desc { font-size:.65rem; color:var(--ink3); margin-top:1px; }
+.model-opt-tag {
+  font-size:.58rem; font-weight:700; padding:2px 6px;
+  border-radius:5px; flex-shrink:0;
+}
+.model-opt-tag.fast   { background:#ecfdf5; color:#065f46; }
+.model-opt-tag.smart  { background:var(--accent-bg); color:var(--accent); }
+.model-opt-tag.power  { background:#f0eafe; color:#6b21a8; }
 
 .topbar-right { display:flex; align-items:center; gap:8px; }
 .icon-btn {
@@ -439,7 +500,7 @@ body::before {
 .phone-btn svg { width:14px; height:14px; color:var(--ink3); flex-shrink:0; transition:color .15s; }
 
 @media(max-width:500px) {
-  .model-badge { display:none; }
+  .model-switcher { display:none; }
   .welcome h1 { font-size:1.3rem; }
   .caps-grid { grid-template-columns:1fr 1fr; }
 }
@@ -456,9 +517,40 @@ body::before {
     <div class="brand-dot"></div>
     ByteChief AI
   </div>
-  <div class="model-badge">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-    claude-sonnet-4
+  <!-- MODEL SWITCHER -->
+  <div class="model-switcher" id="modelSwitcher">
+    <div class="model-badge" id="modelBadge" onclick="toggleModelMenu()">
+      <svg class="model-badge-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      <span id="modelLabel">Sonnet 4</span>
+      <svg class="model-badge-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="model-dropdown" id="modelDropdown">
+      <div class="model-dropdown-header">Choose model</div>
+      <div class="model-option" data-model="claude-opus-4-5" data-label="Opus 4" onclick="selectModel(this)">
+        <div class="model-opt-icon opus">Op</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Claude Opus 4</div>
+          <div class="model-opt-desc">Most powerful, complex tasks</div>
+        </div>
+        <span class="model-opt-tag power">Power</span>
+      </div>
+      <div class="model-option active" data-model="claude-sonnet-4-20250514" data-label="Sonnet 4" onclick="selectModel(this)">
+        <div class="model-opt-icon sonnet">So</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Claude Sonnet 4</div>
+          <div class="model-opt-desc">Smart and fast, great for most tasks</div>
+        </div>
+        <span class="model-opt-tag smart">Default</span>
+      </div>
+      <div class="model-option" data-model="claude-haiku-4-5-20251001" data-label="Haiku 4" onclick="selectModel(this)">
+        <div class="model-opt-icon haiku">Ha</div>
+        <div class="model-opt-body">
+          <div class="model-opt-name">Claude Haiku 4</div>
+          <div class="model-opt-desc">Fastest, ideal for quick answers</div>
+        </div>
+        <span class="model-opt-tag fast">Fast</span>
+      </div>
+    </div>
   </div>
   <div class="topbar-right">
     <button class="icon-btn" id="ttsBtn" onclick="toggleTTS()" title="Text to Speech">
@@ -625,7 +717,7 @@ body::before {
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
 const API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL   = 'claude-sonnet-4-20250514';
+let MODEL     = 'claude-sonnet-4-20250514';
 let _blkId = 0;
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -710,6 +802,33 @@ function renderMemory() {
     </div>
   `).join('');
 }
+
+// ── Model switcher ─────────────────────────────────────────────────────────
+function toggleModelMenu() {
+  const badge    = document.getElementById('modelBadge');
+  const dropdown = document.getElementById('modelDropdown');
+  const isOpen   = dropdown.classList.contains('open');
+  if (isOpen) { closeModelMenu(); } else { badge.classList.add('open'); dropdown.classList.add('open'); }
+}
+function closeModelMenu() {
+  document.getElementById('modelBadge').classList.remove('open');
+  document.getElementById('modelDropdown').classList.remove('open');
+}
+function selectModel(el) {
+  MODEL = el.dataset.model;
+  const label = el.dataset.label;
+  document.getElementById('modelLabel').textContent = label;
+  document.querySelectorAll('.model-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  closeModelMenu();
+  toast(`Model: ${label}`, 'inf');
+  // Clear history when switching models to avoid context confusion
+  history = [];
+}
+// Close on outside click
+document.addEventListener('click', e => {
+  if (!document.getElementById('modelSwitcher').contains(e.target)) closeModelMenu();
+});
 
 // ── Sidebar ────────────────────────────────────────────────────────────────
 function toggleSB() {
