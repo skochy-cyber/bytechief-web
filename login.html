@@ -2,89 +2,712 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-<meta name="theme-color" content="#4f46e5">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>ByteChief AI — Login</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="Sign in to your ByteChief AI account — powered by Claude Sonnet 4.">
+<title>ByteChief AI — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json">
-<link rel="icon" href="/assets/favicon.ico">
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
 <style>
-:root{--bg:#000;--surface:#0a0a0a;--card:#0d0d0d;--border:#1a1a1a;--text:#fff;--muted:#555;--primary:#4f46e5;--r:12px;}
+
+/* ─── CURSOR ──────────────────────────────────── */
+*{cursor:none!important;}
+.cursor{position:fixed;pointer-events:none;z-index:9999;mix-blend-mode:multiply;}
+.cursor-dot{
+  width:8px;height:8px;background:var(--ink);border-radius:50%;
+  transform:translate(-50%,-50%);
+  transition:transform .1s,width .25s,height .25s,background .25s;
+}
+.cursor-ring{
+  width:36px;height:36px;
+  border:1.5px solid rgba(17,16,9,.25);border-radius:50%;
+  transform:translate(-50%,-50%);
+  transition:transform .18s cubic-bezier(.17,.67,.35,1.2),width .3s,height .3s,border-color .25s;
+}
+body.hovering .cursor-dot{width:12px;height:12px;background:var(--accent);}
+body.hovering .cursor-ring{width:52px;height:52px;border-color:rgba(200,75,9,.35);}
+
+/* ─── TOKENS ──────────────────────────────────── */
+:root{
+  --white:#ffffff;
+  --off:#f9f8f6;
+  --off2:#f3f1ec;
+  --border:#e6e2da;
+  --border2:#d6d1c8;
+  --ink:#0f0e0b;
+  --ink2:#2e2d29;
+  --ink3:#706d66;
+  --ink4:#a8a49d;
+  --accent:#c84b09;
+  --accent2:#e85f1a;
+  --accent-bg:#fff3ec;
+  --accent-border:rgba(200,75,9,.18);
+  --green:#0f7a40;
+  --shadow-sm:0 1px 3px rgba(15,14,11,.05),0 2px 8px rgba(15,14,11,.03);
+  --shadow:0 4px 20px rgba(15,14,11,.07),0 1px 4px rgba(15,14,11,.05);
+  --shadow-xl:0 32px 80px rgba(15,14,11,.13),0 8px 24px rgba(15,14,11,.08);
+}
+
+/* ─── RESET ───────────────────────────────────── */
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
-.bg-g{position:fixed;top:-30%;left:-20%;width:70vw;height:70vw;background:radial-gradient(circle,rgba(79,70,229,.08)0%,transparent 60%);z-index:0;pointer-events:none;}
-nav{position:relative;z-index:10;padding:0 5%;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
-.nav-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.95rem;text-decoration:none;color:var(--text);}
-.nav-logo img{height:24px;width:24px;border-radius:5px;object-fit:cover;}
-nav a.link{color:var(--muted);text-decoration:none;font-size:.85rem;transition:.2s;}nav a.link:hover{color:var(--text);}
-.wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;position:relative;z-index:1;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:44px 36px;width:100%;max-width:400px;}
-.card-head{text-align:center;margin-bottom:28px;}
-.card-head img{width:52px;height:52px;border-radius:14px;margin-bottom:14px;}
-.card-head h1{font-size:1.6rem;font-weight:800;margin-bottom:5px;}
-.card-head p{color:var(--muted);font-size:.88rem;}
-.form-group{margin-bottom:15px;}
-.form-label{display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:#ccc;}
-.form-input{width:100%;padding:.78rem 1rem;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:inherit;font-size:.92rem;transition:.2s;outline:none;}
-.form-input:focus{border-color:rgba(79,70,229,.6);box-shadow:0 0 0 3px rgba(79,70,229,.1);}
-.form-input::placeholder{color:var(--muted);}
-.remember-row{display:flex;align-items:center;gap:8px;margin-bottom:18px;}
-.remember-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--primary);}
-.remember-row label{font-size:.83rem;color:var(--muted);cursor:pointer;}
-.btn-submit{width:100%;padding:.88rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;border-radius:var(--r);font-family:inherit;font-size:.97rem;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
-.btn-submit:hover{opacity:.9;}
-.btn-submit:disabled{opacity:.5;cursor:not-allowed;}
-.err-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:var(--r);padding:.7rem 1rem;font-size:.83rem;color:#f87171;margin-bottom:14px;display:none;}
-.err-box.show{display:block;}
-.bottom{text-align:center;margin-top:20px;font-size:.85rem;color:var(--muted);}
-.bottom a{color:#818cf8;text-decoration:none;}
-footer{position:relative;z-index:1;text-align:center;padding:16px;font-size:.75rem;color:var(--muted);}
-footer a{color:var(--muted);text-decoration:none;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--white);color:var(--ink);
+  font-family:'Geist',sans-serif;
+  min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;
+}
+
+/* ─── NOISE ───────────────────────────────────── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.022;
+}
+
+/* ─── LOADER ──────────────────────────────────── */
+#loader{
+  position:fixed;inset:0;z-index:9000;
+  background:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .6s ease,visibility .6s ease;
+}
+#loader.gone{opacity:0;visibility:hidden;pointer-events:none;}
+#loader.hidden{display:none;}
+.loader-inner{text-align:center;}
+.loader-bar{width:200px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin:20px auto 0;}
+.loader-fill{height:100%;background:#fff;width:0%;animation:load .85s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes load{to{width:100%;}}
+.loader-word{font-family:'Instrument Serif',serif;font-size:1.6rem;color:#fff;letter-spacing:-.02em;}
+
+/* ─── BG ──────────────────────────────────────── */
+.page-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.pg-blob{
+  position:absolute;border-radius:50%;filter:blur(90px);opacity:0;
+}
+.pg-blob:nth-child(1){
+  width:55vw;height:50vw;top:-15vw;left:-10vw;
+  background:radial-gradient(circle,rgba(200,75,9,.05),transparent 65%);
+  animation:blobIn 1.4s .2s ease forwards,blobFloat 14s 1.6s ease-in-out infinite alternate;
+}
+.pg-blob:nth-child(2){
+  width:42vw;height:38vw;bottom:-8vw;right:-8vw;
+  background:radial-gradient(circle,rgba(26,66,201,.04),transparent 65%);
+  animation:blobIn 1.4s .4s ease forwards,blobFloat 12s 2s ease-in-out infinite alternate-reverse;
+}
+@keyframes blobIn{from{opacity:0;}to{opacity:1;}}
+@keyframes blobFloat{0%{transform:translate(0,0) scale(1);}100%{transform:translate(2%,3%) scale(1.04);}}
+
+.pg-grid{
+  position:fixed;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(15,14,11,.038) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(15,14,11,.038) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 80% 70% at 20% 30%,black 20%,transparent 72%);
+}
+
+/* ─── NAV ─────────────────────────────────────── */
+nav{
+  position:relative;z-index:500;
+  height:64px;display:flex;align-items:center;
+  padding:0 6%;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+}
+.nav-logo{
+  display:flex;align-items:center;gap:11px;
+  text-decoration:none;
+  font-family:'Instrument Serif',serif;font-size:1.1rem;color:var(--ink);
+}
+.logo-mark{
+  width:32px;height:32px;border-radius:8px;background:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.logo-mark:hover{transform:rotate(-6deg) scale(1.08);}
+.logo-mark svg{width:16px;height:16px;}
+.logo-label{font-size:1rem;font-weight:600;}
+.nav-pill{
+  font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  background:var(--accent);color:#fff;padding:2px 7px;border-radius:4px;position:relative;top:-1px;
+}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.nav-signup{
+  font-size:.82rem;color:var(--ink3);text-decoration:none;font-weight:500;
+  padding:.38rem .85rem;border-radius:9px;
+  border:1px solid var(--border2);
+  transition:color .18s,background .18s;
+}
+.nav-signup:hover{color:var(--ink);background:var(--off2);}
+
+/* ─── LAYOUT ──────────────────────────────────── */
+.main{
+  flex:1;position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:center;
+  padding:56px 6% 80px;
+  gap:72px;
+}
+@media(max-width:900px){.main{flex-direction:column;gap:0;padding:44px 5% 72px;}}
+
+/* ─── LEFT PANEL ──────────────────────────────── */
+.left-panel{
+  max-width:340px;flex-shrink:0;
+  opacity:0;
+  animation:slideUp .85s .5s cubic-bezier(.16,1,.3,1) forwards;
+}
+@media(max-width:900px){.left-panel{display:none;}}
+.lp-label{
+  font-size:.63rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.13em;color:var(--accent);margin-bottom:14px;
+}
+.lp-h{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(1.8rem,2.6vw,2.4rem);
+  font-weight:400;line-height:1.1;letter-spacing:-.03em;
+  color:var(--ink);margin-bottom:16px;
+}
+.lp-h em{font-style:italic;color:var(--accent);}
+.lp-sub{font-size:.875rem;color:var(--ink3);line-height:1.78;margin-bottom:36px;}
+
+/* recent activity ticker */
+.activity{
+  border:1px solid var(--border);border-radius:14px;
+  overflow:hidden;background:var(--white);
+  box-shadow:var(--shadow);
+}
+.activity-head{
+  background:var(--off);border-bottom:1px solid var(--border);
+  padding:11px 16px;
+  display:flex;align-items:center;gap:8px;
+}
+.activity-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--accent);
+  animation:pulse 2s ease infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(200,75,9,.4);}
+  50%{box-shadow:0 0 0 5px rgba(200,75,9,0);}
+}
+.activity-head-txt{font-size:.72rem;font-weight:600;color:var(--ink3);}
+.activity-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  opacity:0;
+  animation:slideUp .6s cubic-bezier(.16,1,.3,1) forwards;
+}
+.activity-item:last-child{border-bottom:none;}
+.activity-item:nth-child(1){animation-delay:.9s;}
+.activity-item:nth-child(2){animation-delay:1.05s;}
+.activity-item:nth-child(3){animation-delay:1.2s;}
+.ai-av{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--off2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;font-weight:700;color:var(--ink3);
+  flex-shrink:0;
+}
+.ai-text{flex:1;}
+.ai-name{font-size:.78rem;font-weight:600;color:var(--ink);}
+.ai-action{font-size:.72rem;color:var(--ink4);margin-top:1px;}
+.ai-time{font-size:.67rem;color:var(--ink4);flex-shrink:0;}
+
+/* ─── CARD ────────────────────────────────────── */
+.card-wrap{
+  width:100%;max-width:440px;flex-shrink:0;
+  opacity:0;
+  animation:cardIn .9s .25s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(28px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+.card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:24px;
+  box-shadow:var(--shadow-xl);
+  overflow:hidden;
+  position:relative;
+}
+
+/* shimmer top edge */
+.card-shimmer{
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent);
+  background-size:200% 100%;
+  animation:shimmerSlide 3s ease-in-out infinite;
+}
+@keyframes shimmerSlide{
+  0%{background-position:200% 0;}100%{background-position:-200% 0;}
+}
+
+/* head */
+.card-head{padding:38px 40px 0;text-align:center;}
+.card-brand{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  margin-bottom:24px;
+  font-family:'Instrument Serif',serif;font-size:.95rem;color:var(--ink);
+  text-decoration:none;
+}
+.card-brand-mark{
+  width:34px;height:34px;border-radius:9px;background:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.card-brand-mark svg{width:15px;height:15px;}
+.card-title{
+  font-family:'Instrument Serif',serif;
+  font-size:2rem;font-weight:400;
+  letter-spacing:-.03em;line-height:1.08;
+  color:var(--ink);margin-bottom:8px;
+}
+.card-title em{font-style:italic;color:var(--accent);}
+.card-sub{font-size:.855rem;color:var(--ink4);line-height:1.6;}
+
+/* form body */
+.form-body{padding:28px 40px 36px;}
+
+/* alert */
+.alert{
+  border-radius:10px;padding:.72rem 1rem;
+  font-size:.82rem;line-height:1.55;
+  margin-bottom:16px;display:none;
+  animation:alertIn .3s cubic-bezier(.16,1,.3,1);
+}
+@keyframes alertIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.alert.show{display:block;}
+.alert-err{background:rgba(200,75,9,.07);border:1px solid rgba(200,75,9,.2);color:var(--accent);}
+.alert-ok{background:rgba(15,122,64,.07);border:1px solid rgba(15,122,64,.2);color:var(--green);}
+
+/* field group */
+.fg{margin-bottom:18px;}
+.fg-label{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:.78rem;font-weight:600;color:var(--ink2);
+  margin-bottom:7px;letter-spacing:-.005em;
+}
+.fg-label a{
+  font-size:.73rem;font-weight:500;color:var(--ink4);
+  text-decoration:none;border-bottom:1px solid transparent;
+  transition:color .18s,border-color .18s;
+}
+.fg-label a:hover{color:var(--accent);border-color:rgba(200,75,9,.25);}
+
+/* input wrapper (for pw toggle) */
+.fi-wrap{position:relative;}
+
+/* inputs */
+.fi{
+  width:100%;padding:.8rem 1rem;
+  background:var(--off);border:1.5px solid var(--border);
+  border-radius:11px;
+  color:var(--ink);font-family:'Geist',sans-serif;font-size:.9rem;
+  outline:none;
+  transition:border-color .2s,background .2s,box-shadow .2s;
+  -webkit-appearance:none;appearance:none;
+}
+.fi:focus{
+  border-color:var(--ink2);background:var(--white);
+  box-shadow:0 0 0 3px rgba(15,14,11,.06);
+}
+.fi::placeholder{color:var(--ink4);}
+.fi.valid{border-color:rgba(15,122,64,.4);}
+.fi.invalid{border-color:rgba(200,75,9,.4);}
+
+/* password field needs right padding for toggle btn */
+.fi.pw-fi{padding-right:48px;}
+
+/* show/hide toggle */
+.pw-toggle{
+  position:absolute;right:0;top:0;bottom:0;
+  width:44px;
+  display:flex;align-items:center;justify-content:center;
+  background:none;border:none;
+  color:var(--ink4);
+  border-radius:0 11px 11px 0;
+  transition:color .18s;
+}
+.pw-toggle:hover{color:var(--ink2);}
+.pw-toggle svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+/* hidden eye slash — shown when pw is visible */
+.eye-slash{display:none;}
+.pw-toggle.visible .eye-open{display:none;}
+.pw-toggle.visible .eye-slash{display:block;}
+
+/* remember + forgot row */
+.meta-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:22px;
+}
+.check-wrap{display:flex;align-items:center;gap:8px;}
+.check-wrap input[type=checkbox]{
+  width:16px;height:16px;
+  border-radius:4px;border:1.5px solid var(--border2);
+  background:var(--off);appearance:none;-webkit-appearance:none;
+  flex-shrink:0;position:relative;
+  transition:background .18s,border-color .18s;
+}
+.check-wrap input[type=checkbox]:checked{
+  background:var(--ink);border-color:var(--ink);
+}
+.check-wrap input[type=checkbox]:checked::after{
+  content:'';position:absolute;
+  left:4px;top:1.5px;width:5px;height:9px;
+  border-right:1.5px solid #fff;border-bottom:1.5px solid #fff;
+  transform:rotate(45deg);
+}
+.check-label{font-size:.8rem;color:var(--ink3);font-weight:500;}
+.forgot-link{
+  font-size:.78rem;color:var(--ink4);text-decoration:none;
+  border-bottom:1px solid transparent;font-weight:500;
+  transition:color .18s,border-color .18s;
+}
+.forgot-link:hover{color:var(--accent);border-color:rgba(200,75,9,.25);}
+
+/* divider */
+.divider{display:flex;align-items:center;gap:12px;margin:22px 0;}
+.divider-line{flex:1;height:1px;background:var(--border);}
+.divider-txt{font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink4);}
+
+/* submit */
+.btn-submit{
+  width:100%;padding:.9rem 1.5rem;
+  background:var(--ink);color:#fff;
+  border:none;border-radius:12px;
+  font-family:'Geist',sans-serif;font-size:.93rem;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  position:relative;overflow:hidden;
+  transition:background .3s,transform .25s,box-shadow .3s;
+  box-shadow:0 4px 20px rgba(15,14,11,.15);
+}
+.btn-submit::after{
+  content:'';position:absolute;inset:0;
+  background:var(--accent);
+  transform:translateX(-102%);
+  transition:transform .38s cubic-bezier(.4,0,.2,1);
+  border-radius:12px;
+}
+.btn-submit:hover::after{transform:translateX(0);}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(200,75,9,.28);}
+.btn-submit:disabled{opacity:.55;transform:none;box-shadow:none;}
+.btn-submit span{position:relative;z-index:1;}
+.btn-arr{
+  position:relative;z-index:1;
+  width:22px;height:22px;background:rgba(255,255,255,.14);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:transform .25s;
+}
+.btn-arr svg{width:10px;height:10px;fill:#fff;}
+.btn-submit:hover .btn-arr{transform:translateX(2px);}
+.btn-submit:disabled .btn-arr{transform:none;}
+
+/* social hint */
+.social-hint{font-size:.78rem;color:var(--ink4);text-align:center;line-height:1.6;}
+.social-hint a{color:var(--ink3);text-decoration:none;border-bottom:1px solid var(--border2);transition:color .18s,border-color .18s;}
+.social-hint a:hover{color:var(--ink);border-color:var(--ink2);}
+
+/* card footer */
+.card-foot{
+  padding:18px 40px 28px;border-top:1px solid var(--border);
+  text-align:center;font-size:.845rem;color:var(--ink4);
+}
+.card-foot a{
+  color:var(--ink);font-weight:600;text-decoration:none;
+  border-bottom:1px solid var(--border2);
+  transition:border-color .18s;
+}
+.card-foot a:hover{border-color:var(--ink);}
+
+/* success overlay */
+.success-state{
+  padding:52px 40px 48px;text-align:center;display:none;
+}
+.success-state.show{display:block;}
+.success-ring{
+  width:72px;height:72px;border-radius:50%;
+  background:rgba(15,122,64,.08);border:1.5px solid rgba(15,122,64,.2);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 22px;
+  animation:ringPop .6s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes ringPop{from{transform:scale(.4);opacity:0;}to{transform:scale(1);opacity:1;}}
+.success-ring svg{width:28px;height:28px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.success-h{
+  font-family:'Instrument Serif',serif;
+  font-size:1.7rem;font-weight:400;letter-spacing:-.025em;
+  color:var(--ink);margin-bottom:8px;
+}
+.success-p{font-size:.875rem;color:var(--ink4);line-height:1.68;}
+.success-bar{width:200px;height:2px;background:var(--border);border-radius:2px;overflow:hidden;margin:28px auto 0;}
+.success-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;animation:sfill 1.2s .3s ease forwards;}
+@keyframes sfill{to{width:100%;}}
+
+/* ─── FOOTER ──────────────────────────────────── */
+footer{
+  position:relative;z-index:1;
+  border-top:1px solid var(--border);
+  padding:20px 6%;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  background:var(--off);
+}
+.f-copy{font-size:.73rem;color:var(--ink4);}
+.f-nav{display:flex;gap:20px;}
+.f-nav a{font-size:.73rem;color:var(--ink4);text-decoration:none;transition:color .18s;}
+.f-nav a:hover{color:var(--ink);}
+
+/* ─── KEYFRAMES ───────────────────────────────── */
+@keyframes slideUp{
+  from{opacity:0;transform:translateY(22px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ─── RESPONSIVE ──────────────────────────────── */
+@media(max-width:480px){
+  *{cursor:auto!important;}
+  .cursor{display:none!important;}
+  .main{padding:32px 4% 64px;}
+  .card-head{padding:28px 24px 0;}
+  .form-body{padding:22px 24px 30px;}
+  .card-foot{padding:16px 24px 24px;}
+  .meta-row{flex-direction:column;align-items:flex-start;gap:10px;}
+  .success-state{padding:40px 24px 38px;}
+}
 </style>
 </head>
 <body>
-<div class="bg-g"></div>
-<nav>
-  <a href="/" class="nav-logo"><img src="/assets/logo-dark.png" alt="">ByteChief AI</a>
-  <a href="signup.html" class="link">Create account →</a>
-</nav>
-<div class="wrap">
-  <div class="card">
-    <div class="card-head">
-      <img src="/assets/logo-dark.png" alt="ByteChief AI">
-      <h1>Welcome back</h1>
-      <p>Log in to your ByteChief AI account</p>
-    </div>
-    <div class="err-box" id="errBox"></div>
-    <form id="loginForm">
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input type="email" id="email" class="form-input" placeholder="you@example.com" required autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" id="password" class="form-input" placeholder="Your password" required autocomplete="current-password">
-      </div>
-      <div class="remember-row">
-        <input type="checkbox" id="rememberMe" checked>
-        <label for="rememberMe">Remember me on this device</label>
-      </div>
-      <button type="submit" class="btn-submit" id="submitBtn">🔐 Log In</button>
-    </form>
-    <div class="bottom">Don't have an account? <a href="signup.html">Sign up free →</a></div>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursorDot"><div class="cursor-dot"></div></div>
+<div class="cursor" id="cursorRing"><div class="cursor-ring"></div></div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-inner">
+    <div class="loader-word">ByteChief AI</div>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
   </div>
 </div>
-<footer><a href="terms.html">Terms of Use</a> · ByteChief AI 2026</footer>
+
+<!-- BG -->
+<div class="page-bg">
+  <div class="pg-blob"></div>
+  <div class="pg-blob"></div>
+</div>
+<div class="pg-grid"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M3 2h10l-2 6H5L3 2zm0 0L1 14h14L12 8" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <span class="logo-label">ByteChief AI</span>
+    <span class="nav-pill">Beta</span>
+  </a>
+  <div class="nav-right">
+    <a href="signup.html" class="nav-signup">Create account</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="lp-label">Welcome back</div>
+    <h2 class="lp-h">The <em>Chief</em><br>remembers you.</h2>
+    <p class="lp-sub">Your conversations, context, and capabilities — right where you left them. Sign in and pick up exactly where you stopped.</p>
+
+    <div class="activity">
+      <div class="activity-head">
+        <div class="activity-dot"></div>
+        <span class="activity-head-txt">Recent sessions</span>
+      </div>
+      <div class="activity-item">
+        <div class="ai-av">A</div>
+        <div class="ai-text">
+          <div class="ai-name">Adaeze O.</div>
+          <div class="ai-action">Analysed Q3 sales CSV</div>
+        </div>
+        <div class="ai-time">2m ago</div>
+      </div>
+      <div class="activity-item">
+        <div class="ai-av">K</div>
+        <div class="ai-text">
+          <div class="ai-name">Kelechi M.</div>
+          <div class="ai-action">Built a REST API in Node</div>
+        </div>
+        <div class="ai-time">14m ago</div>
+      </div>
+      <div class="activity-item">
+        <div class="ai-av">T</div>
+        <div class="ai-text">
+          <div class="ai-name">Tunde B.</div>
+          <div class="ai-action">Generated a pitch deck</div>
+        </div>
+        <div class="ai-time">1h ago</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD -->
+  <div class="card-wrap">
+    <div class="card">
+      <div class="card-shimmer"></div>
+
+      <!-- Head -->
+      <div class="card-head">
+        <a href="/" class="card-brand">
+          <div class="card-brand-mark">
+            <svg viewBox="0 0 16 16" fill="none">
+              <path d="M3 2h10l-2 6H5L3 2zm0 0L1 14h14L12 8" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          ByteChief AI
+        </a>
+        <h1 class="card-title"><em>Welcome</em><br>back.</h1>
+        <p class="card-sub">Sign in to your ByteChief AI account</p>
+      </div>
+
+      <!-- Form -->
+      <div class="form-body" id="formBody">
+        <div class="alert alert-err" id="errBox"></div>
+        <div class="alert alert-ok"  id="okBox"></div>
+
+        <div class="fg">
+          <label class="fg-label" for="email">
+            Email Address
+          </label>
+          <input
+            type="email" id="email" class="fi"
+            placeholder="you@example.com"
+            required autocomplete="email"
+            oninput="onEmailInput(this)">
+        </div>
+
+        <div class="fg">
+          <label class="fg-label" for="password">
+            Password
+            <a href="#" class="forgot-link" onclick="forgotPw(event)">Forgot password?</a>
+          </label>
+          <div class="fi-wrap">
+            <input
+              type="password" id="password" class="fi pw-fi"
+              placeholder="Your password"
+              required autocomplete="current-password">
+            <button
+              type="button" class="pw-toggle" id="pwToggle"
+              onclick="togglePw()" aria-label="Toggle password visibility">
+              <!-- Eye open -->
+              <svg class="eye-open" viewBox="0 0 24 24">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <!-- Eye slash -->
+              <svg class="eye-slash" viewBox="0 0 24 24">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="meta-row">
+          <label class="check-wrap">
+            <input type="checkbox" id="rememberMe" checked>
+            <span class="check-label">Remember me</span>
+          </label>
+        </div>
+
+        <button type="button" class="btn-submit" id="submitBtn" onclick="doLogin()">
+          <span>Sign in</span>
+          <div class="btn-arr">
+            <svg viewBox="0 0 10 10"><path d="M2 5h6M5.5 2.5 8 5l-2.5 2.5" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+          </div>
+        </button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-txt">or</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <p class="social-hint">No account yet? <a href="signup.html">Create one free — no card needed</a></p>
+      </div>
+
+      <!-- Success state -->
+      <div class="success-state" id="successState">
+        <div class="success-ring">
+          <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h2 class="success-h">Welcome back</h2>
+        <p class="success-p">Signing you in now. Taking you to your dashboard.</p>
+        <div class="success-bar"><div class="success-fill"></div></div>
+      </div>
+
+      <!-- Card footer -->
+      <div class="card-foot" id="cardFoot">
+        Don't have an account? <a href="signup.html">Sign up free</a>
+      </div>
+
+    </div><!-- /card -->
+  </div><!-- /card-wrap -->
+
+</div><!-- /main -->
+
+<!-- FOOTER -->
+<footer>
+  <p class="f-copy">ByteChief AI &middot; Built by Obasanjo Samuel &middot; Tribal Tech &middot; 2026</p>
+  <nav class="f-nav">
+    <a href="about.html">About</a>
+    <a href="terms.html">Terms</a>
+    <a href="admin-login.html">Admin</a>
+  </nav>
+</footer>
+
 <script>
-// ── Session helpers ──────────────────────────────────────────────────────────
+/* ── LOADER ── */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const ldr = document.getElementById('loader');
+    ldr.classList.add('gone');
+    ldr.addEventListener('transitionend', () => ldr.classList.add('hidden'), {once:true});
+  }, 850);
+});
+
+/* ── CURSOR ── */
+const dot  = document.getElementById('cursorDot');
+const ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+window.addEventListener('mousemove', e => {
+  mx=e.clientX; my=e.clientY;
+  dot.style.left=mx+'px'; dot.style.top=my+'px';
+},{passive:true});
+(function raf(){
+  rx+=(mx-rx)*.14; ry+=(my-ry)*.14;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(raf);
+})();
+document.querySelectorAll('a,button,.activity-item').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
+});
+
+/* ── SESSION HELPERS ── */
 function saveSession(token, user, remember) {
-  // Always save to sessionStorage (survives tab refresh)
   sessionStorage.setItem('bc_token', token);
   sessionStorage.setItem('bc_user',  JSON.stringify(user));
-  // If remember checked, also save to localStorage (survives app close/reopen)
-  if (remember) {
+  if(remember){
     localStorage.setItem('bc_token', token);
     localStorage.setItem('bc_user',  JSON.stringify(user));
     localStorage.setItem('bc_remember', '1');
@@ -94,54 +717,107 @@ function saveSession(token, user, remember) {
     localStorage.removeItem('bc_remember');
   }
 }
-
-function getToken() {
+function getToken(){
   return sessionStorage.getItem('bc_token') || localStorage.getItem('bc_token') || null;
 }
 
-// ── Auto-redirect if already logged in ──────────────────────────────────────
-(async function checkSession() {
+/* ── AUTO-REDIRECT ── */
+(async function checkSession(){
   const token = getToken();
-  if (!token) return;
-  try {
-    const r = await fetch('/api/me', { headers: { Authorization: 'Bearer ' + token } });
-    if (r.ok) {
-      // Valid session — sync to sessionStorage if only in localStorage
-      sessionStorage.setItem('bc_token', token);
-      window.location.replace('dashboard.html');
-    } else {
-      // Token expired — clear everything
-      ['bc_token','bc_user','bc_remember'].forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
-    }
-  } catch {}
+  if(!token) return;
+  try{
+    const r = await fetch('/api/me', {headers:{Authorization:'Bearer '+token}});
+    if(r.ok){ sessionStorage.setItem('bc_token', token); window.location.replace('dashboard.html'); }
+    else{ ['bc_token','bc_user','bc_remember'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k);}); }
+  }catch{}
 })();
 
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+/* ── EMAIL VALIDATION ── */
+function onEmailInput(el){
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value);
+  el.classList.toggle('valid',  ok && el.value.length > 0);
+  el.classList.toggle('invalid', !ok && el.value.length > 4);
+}
+
+/* ── PASSWORD TOGGLE ── */
+function togglePw(){
+  const input  = document.getElementById('password');
+  const toggle = document.getElementById('pwToggle');
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  toggle.classList.toggle('visible', isHidden);
+  toggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+  input.focus();
+}
+
+/* ── FORGOT PW ── */
+function forgotPw(e){
   e.preventDefault();
-  const btn = document.getElementById('submitBtn');
-  const err = document.getElementById('errBox');
-  const remember = document.getElementById('rememberMe').checked;
+  const email = document.getElementById('email').value.trim();
+  const err   = document.getElementById('errBox');
+  const ok    = document.getElementById('okBox');
   err.classList.remove('show');
-  btn.disabled = true; btn.textContent = '⏳ Logging in...';
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email:    document.getElementById('email').value.trim(),
-        password: document.getElementById('password').value,
-      }),
+  if(!email){
+    err.textContent = 'Enter your email address first, then click Forgot password.';
+    err.classList.add('show'); return;
+  }
+  ok.textContent = 'If that email exists, a reset link is on its way.';
+  ok.classList.add('show');
+}
+
+/* ── ALERTS ── */
+function clearAlerts(){
+  document.getElementById('errBox').classList.remove('show');
+  document.getElementById('okBox').classList.remove('show');
+}
+function showErr(msg){
+  const b = document.getElementById('errBox');
+  b.textContent = msg; b.classList.add('show');
+}
+
+/* ── LOGIN ── */
+async function doLogin(){
+  const btn      = document.getElementById('submitBtn');
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const remember = document.getElementById('rememberMe').checked;
+
+  clearAlerts();
+
+  if(!email){ showErr('Please enter your email address'); return; }
+  if(!password){ showErr('Please enter your password'); return; }
+
+  btn.disabled = true;
+  btn.querySelector('span').textContent = 'Signing in...';
+
+  try{
+    const res = await fetch('/api/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, password}),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Login failed');
+    if(!res.ok) throw new Error(data.error || 'Login failed');
+
     saveSession(data.token, data.user, remember);
-    btn.textContent = '✅ Success!';
-    setTimeout(() => window.location.replace('dashboard.html'), 500);
-  } catch (e) {
-    err.textContent = e.message;
-    err.classList.add('show');
-    btn.disabled = false; btn.textContent = '🔐 Log In';
+
+    // Show success state
+    document.getElementById('formBody').style.display  = 'none';
+    document.getElementById('cardFoot').style.display  = 'none';
+    document.querySelector('.card-head').style.display = 'none';
+    document.getElementById('successState').classList.add('show');
+
+    setTimeout(() => window.location.replace('dashboard.html'), 1800);
+  } catch(e){
+    showErr(e.message);
+    btn.disabled = false;
+    btn.querySelector('span').textContent = 'Sign in';
   }
+}
+
+/* ── ENTER KEY ── */
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter') doLogin();
 });
 </script>
 </body>
