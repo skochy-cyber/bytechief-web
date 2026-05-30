@@ -802,6 +802,36 @@ body::before {
     <div class="avatar-pill" onclick="logout()">
       <div class="av-circle" id="uav">?</div>
       <span class="av-name" id="uname">User</span>
+      <script>
+        // Runs immediately — set name before page renders
+        (function(){
+          try {
+            // Try flat key first (fastest)
+            var n = sessionStorage.getItem('bc_name') || localStorage.getItem('bc_name');
+            var e = sessionStorage.getItem('bc_email') || localStorage.getItem('bc_email');
+            // Try bc_user JSON
+            if (!n) {
+              var s = sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user');
+              if (s) { var u = JSON.parse(s); n = u.name; e = u.email; }
+            }
+            // Try JWT
+            if (!n) {
+              var t = sessionStorage.getItem('bc_token') || localStorage.getItem('bc_token');
+              if (t) {
+                var b = t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+                while(b.length%4) b+='=';
+                var p = JSON.parse(atob(b));
+                n = p.name; e = p.email;
+              }
+            }
+            var display = (n && n.trim() && n.trim().toLowerCase()!=='user') ? n.trim() : (e ? e.split('@')[0] : '');
+            if (display) {
+              document.getElementById('uav').textContent = display[0].toUpperCase();
+              document.getElementById('uname').textContent = display;
+            }
+          } catch(err) {}
+        })();
+      </script>
     </div>
   </div>
 </header>
@@ -1209,12 +1239,9 @@ function logout() {
     const key = getUserKey();
     if (key && key !== 'default') localStorage.setItem('bc_last_ukey', key);
   } catch {}
-  sessionStorage.removeItem('bc_token');
-  sessionStorage.removeItem('bc_user');
-  sessionStorage.removeItem('bc_remember');
+  ['bc_token','bc_user','bc_name','bc_email','bc_remember'].forEach(k => sessionStorage.removeItem(k));
   if (!localStorage.getItem('bc_remember')) {
-    localStorage.removeItem('bc_token');
-    localStorage.removeItem('bc_user');
+    ['bc_token','bc_user','bc_name','bc_email'].forEach(k => localStorage.removeItem(k));
   }
   location.href = 'login.html';
 }
