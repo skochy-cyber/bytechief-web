@@ -792,28 +792,11 @@ body::before {
   </main>
 </div>
 
-<!-- GROQ KEY MODAL -->
-<div class="key-modal-backdrop" id="groqKeyModal">
-  <div class="key-modal">
-    <div class="key-modal-title">Enter your Groq API Key</div>
-    <div class="key-modal-sub">
-      Groq is free to use. Get your key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> — it only takes a minute.<br><br>
-      Your key is stored locally on your device only.
-    </div>
-    <input class="key-input" id="groqKeyInput" type="password" placeholder="gsk_..." spellcheck="false">
-    <div class="key-modal-actions">
-      <button class="key-btn secondary" onclick="cancelGroqKey()">Cancel</button>
-      <button class="key-btn primary" onclick="saveGroqKey()">Save & Connect</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast-wrap" id="toasts"></div>
 
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
 const API_URL      = 'https://api.anthropic.com/v1/messages';
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 let MODEL    = 'claude-sonnet-4-20250514';
 let PROVIDER = 'anthropic'; // 'anthropic' | 'groq'
 let _blkId = 0;
@@ -936,18 +919,6 @@ function closeModelMenu() {
   if (dropdown) dropdown.classList.remove('open');
 }
 function selectModel(el) {
-  const newProvider = el.dataset.provider || 'anthropic';
-
-  // If switching to Groq, check for key first
-  if (newProvider === 'groq' && !localStorage.getItem('bc_groq_key')) {
-    // Store pending selection to apply after key is saved
-    window._pendingModelEl = el;
-    document.getElementById('groqKeyModal').classList.add('open');
-    document.getElementById('groqKeyInput').focus();
-    closeModelMenu();
-    return;
-  }
-
   applyModelSelection(el);
 }
 
@@ -965,33 +936,9 @@ function applyModelSelection(el) {
   history = [];
 }
 
-// ── Groq key modal ─────────────────────────────────────────────────────────
-function saveGroqKey() {
-  const key = document.getElementById('groqKeyInput').value.trim();
-  if (!key.startsWith('gsk_') || key.length < 20) {
-    toast('Invalid key — must start with gsk_', 'err'); return;
-  }
-  localStorage.setItem('bc_groq_key', key);
-  document.getElementById('groqKeyModal').classList.remove('open');
-  document.getElementById('groqKeyInput').value = '';
-  if (window._pendingModelEl) {
-    applyModelSelection(window._pendingModelEl);
-    window._pendingModelEl = null;
-  }
-  toast('Groq connected', 'ok');
-}
-
-function cancelGroqKey() {
-  document.getElementById('groqKeyModal').classList.remove('open');
-  document.getElementById('groqKeyInput').value = '';
-  window._pendingModelEl = null;
-}
-
-// Allow Enter key in key input
+// Allow Enter key in key input (kept for other modals)
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('groqKeyModal').classList.contains('open')) {
-    saveGroqKey();
-  }
+  // reserved
 });
 // Close on outside click
 document.addEventListener('click', e => {
@@ -1167,10 +1114,7 @@ async function sendMessage() {
     let reply = '';
 
     if (PROVIDER === 'groq') {
-      // ── Groq (OpenAI-compatible) ──────────────────────────────────────
-      const groqKey = localStorage.getItem('bc_groq_key');
-      if (!groqKey) { throw new Error('No Groq API key. Switch model to re-enter your key.'); }
-
+      // ── Groq via backend proxy (key stored server-side in .env) ──────
       const groqMessages = [
         { role: 'system', content: systemPrompt },
         ...msgHistory.slice(-20).map(m => ({
@@ -1181,30 +1125,25 @@ async function sendMessage() {
         }))
       ];
 
-      const r = await fetch(GROQ_API_URL, {
+      const r = await fetch('/api/groq', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + groqKey
+          'Content-Type':  'application/json',
+          'Authorization': 'Bearer ' + (localStorage.getItem('bc_token') || '')
         },
         body: JSON.stringify({
-          model: MODEL,
+          model:      MODEL,
           max_tokens: 4096,
-          messages: groqMessages
+          messages:   groqMessages
         })
       });
 
       typingEl.remove();
       const data = await r.json();
-      if (!r.ok) {
-        if (r.status === 401) {
-          localStorage.removeItem('bc_groq_key');
-          throw new Error('Invalid Groq API key. Switch model to re-enter it.');
-        }
-        throw new Error(data.error?.message || `Groq API error ${r.status}`);
-      }
+      if (!r.ok) throw new Error(data.error || `Groq error ${r.status}`);
       reply = data.choices?.[0]?.message?.content || 'No response generated.';
-
+      const data = await r.json();
+      if (!r.ok) {
     } else {
       // ── Anthropic ─────────────────────────────────────────────────────
       const tools = webSearch ? [{ type: 'web_search_20250305', name: 'web_search' }] : undefined;
