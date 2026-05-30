@@ -1085,10 +1085,15 @@ async function doRegister(){
     const data = await res.json();
     if(!res.ok) throw new Error(data.error || 'Registration failed');
 
+    const resolvedName = (data.user.name && data.user.name.trim()) ? data.user.name.trim() : (data.user.email ? data.user.email.split('@')[0] : 'User');
     localStorage.setItem('bc_token', data.token);
     localStorage.setItem('bc_user',  JSON.stringify(data.user));
+    localStorage.setItem('bc_name',  resolvedName);
+    localStorage.setItem('bc_email', data.user.email || '');
     sessionStorage.setItem('bc_token', data.token);
     sessionStorage.setItem('bc_user',  JSON.stringify(data.user));
+    sessionStorage.setItem('bc_name',  resolvedName);
+    sessionStorage.setItem('bc_email', data.user.email || '');
 
     // Hide form, show success
     document.querySelector('.card-head').style.display='none';
