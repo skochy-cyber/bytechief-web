@@ -117,6 +117,10 @@ const authMw = (req, res, next) => {
 const adminMw = (req, res, next) =>
   req.user?.role === 'admin' ? next() : res.status(403).json({ error: 'Admin only' });
 
+function displayName(name, email) {
+  return (name && name.trim()) ? name.trim() : (email ? email.split('@')[0] : 'User');
+}
+
 function makeToken(user) {
   return jwt.sign(
     { id: user._id || user.id, email: user.email, name: user.name, role: user.role },
@@ -147,7 +151,7 @@ app.post('/api/register', async (req, res) => {
         isInvited: true, inviteCode: inviteCode.toUpperCase(),
       });
       invite.used = true; invite.usedBy = email; await invite.save();
-      return res.json({ token: makeToken(user), user: { email: user.email, name: user.name, role: user.role } });
+      return res.json({ token: makeToken(user), user: { email: user.email, name: displayName(user.name, user.email), role: user.role } });
     } else {
       const inv = memInvites.find(i => i.code === inviteCode.toUpperCase() && !i.used);
       if (!inv) return res.status(403).json({ error: 'Invalid or already used invite code' });
@@ -155,7 +159,7 @@ app.post('/api/register', async (req, res) => {
         return res.status(409).json({ error: 'Email already registered' });
       const user = { id: memIdSeq++, email: email.toLowerCase(), name: name||'', password: await bcrypt.hash(password,10), role:'user', memory:{contacts:{},preferences:{},facts:[]}, totalMessages:0 };
       memUsers.push(user); inv.used=true;
-      return res.json({ token: makeToken(user), user: { email:user.email, name:user.name, role:user.role } });
+      return res.json({ token: makeToken(user), user: { email:user.email, name:displayName(user.name, user.email), role:user.role } });
     }
   } catch (e) { res.status(500).json({ error: 'Registration failed' }); }
 });
@@ -174,7 +178,7 @@ app.post('/api/login', async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
     if (MONGO_URI) await User.findByIdAndUpdate(user._id, { lastActive: new Date() });
-    res.json({ token: makeToken(user), user: { email: user.email, name: user.name, role: user.role } });
+    res.json({ token: makeToken(user), user: { email: user.email, name: displayName(user.name, user.email), role: user.role } });
   } catch (e) { res.status(500).json({ error: 'Login failed' }); }
 });
 
@@ -187,9 +191,10 @@ app.get('/api/me', authMw, async (req, res) => {
       const u = await User.findById(req.user.id).select('name email').lean();
       if (u) { name = u.name || ''; email = u.email || ''; }
     }
-    res.json({ id: req.user.id, email, name, role: req.user.role });
+    res.json({ id: req.user.id, email, name: displayName(name, email), role: req.user.role });
   } catch {
-    res.json({ id: req.user.id, email: req.user.email || '', name: req.user.name || '', role: req.user.role });
+    const email = req.user.email || '';
+    res.json({ id: req.user.id, email, name: displayName(req.user.name, email), role: req.user.role });
   }
 });
 
@@ -202,10 +207,10 @@ app.get('/api/memory', authMw, async (req, res) => {
     if (MONGO_URI) {
       const u = await User.findById(req.user.id).select('name email memory');
       if (!u) return res.status(404).json({ error: 'User not found' });
-      return res.json({ name: u.name, email: u.email, memory: u.memory });
+      return res.json({ name: displayName(u.name, u.email), email: u.email, memory: u.memory });
     }
     const u = memUsers.find(u => u.id == req.user.id);
-    res.json({ name: u?.name||'', email: u?.email||req.user.email||'', memory: u?.memory||{} });
+    res.json({ name: displayName(u?.name, u?.email||req.user.email), email: u?.email||req.user.email||'', memory: u?.memory||{} });
   } catch (e) { res.status(500).json({ error: 'Failed to fetch memory' }); }
 });
 
