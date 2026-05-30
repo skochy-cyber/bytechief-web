@@ -1122,6 +1122,11 @@ function loadChatSession(id) {
     if (!raw) return;
     const data = JSON.parse(raw);
     // Clear current UI
+    busy = false;
+    const btn = document.getElementById('sendBtn');
+    if (btn) btn.disabled = false;
+    const ta = document.getElementById('ta');
+    if (ta) { ta.value = ''; autoResize(ta); updateSendBtn(); }
     const msgsEl = document.getElementById('msgs');
     msgsEl.innerHTML = '';
     history = data.history || [];
@@ -1160,6 +1165,11 @@ function newChat() {
   saveActiveChat();
   history = [];
   activeChatId = null;
+  busy = false;
+  const btn = document.getElementById('sendBtn');
+  if (btn) { btn.disabled = false; }
+  const ta = document.getElementById('ta');
+  if (ta) { ta.value = ''; autoResize(ta); updateSendBtn(); }
   const msgsEl = document.getElementById('msgs');
   msgsEl.innerHTML = '';
   // Re-add welcome screen
