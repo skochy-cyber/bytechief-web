@@ -1585,9 +1585,10 @@ async function sendMessage() {
         })
       });
 
-      typingEl.remove();
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error || `Groq error ${r.status}`);
+      typingEl?.remove();
+      let data;
+      try { data = await r.json(); } catch { throw new Error(`Groq error ${r.status}: invalid response`); }
+      if (!r.ok) throw new Error(data.error?.message || data.error || `Groq error ${r.status}`);
       reply = data.choices?.[0]?.message?.content || 'No response generated.';
 
     } else {
@@ -1612,8 +1613,9 @@ async function sendMessage() {
         body: JSON.stringify(body)
       });
 
-      typingEl.remove();
-      const data = await r.json();
+      typingEl?.remove();
+      let data;
+      try { data = await r.json(); } catch { throw new Error(`API error ${r.status}: invalid response`); }
       if (!r.ok) throw new Error(data.error?.message || `API error ${r.status}`);
 
       reply = data.content
