@@ -1524,6 +1524,12 @@ async function sendMessage() {
   const text = ta.value.trim();
   if (!text && !pendingFiles.length) return;
 
+  // Clear input immediately now that we know we're processing
+  ta.value = ''; autoResize(ta); updateSendBtn();
+
+  busy = true;
+  document.getElementById('sendBtn').disabled = true;
+
   const welcome = document.getElementById('welcome');
   if (welcome) welcome.remove();
 
@@ -1531,10 +1537,6 @@ async function sendMessage() {
   const filesSnap = [...pendingFiles];
   addMessage('out', displayText, null, filesSnap);
   trackChatTitle(text);
-  ta.value = ''; autoResize(ta); updateSendBtn();
-
-  busy = true;
-  document.getElementById('sendBtn').disabled = true;
   closeSB();
 
   if (!filesSnap.length) {
@@ -1640,12 +1642,12 @@ async function sendMessage() {
     saveLog(text, reply, imageUrl ? 'image' : 'chat');
 
   } catch (e) {
-    typingEl.remove();
+    typingEl?.remove();
     addMessage('in', e.message || 'Something went wrong. Please try again.');
+  } finally {
+    busy = false;
+    document.getElementById('sendBtn').disabled = false;
   }
-
-  busy = false;
-  document.getElementById('sendBtn').disabled = false;
 }
 
 function buildSystemPrompt() {
