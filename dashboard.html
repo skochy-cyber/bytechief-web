@@ -374,11 +374,13 @@ body::before {
 .msgs::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
 
 /* Message rows */
-.msg-row { display:flex; gap:10px; max-width:88%; animation:msgIn .2s ease; min-width:0; }
+.msg-row { display:flex; gap:10px; animation:msgIn .2s ease; min-width:0; }
 @keyframes msgIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
-.msg-row.out { align-self:flex-end; flex-direction:row-reverse; }
-.msg-row.in  { align-self:flex-start; }
-@media(max-width:500px) { .msg-row { max-width:97%; } }
+.msg-row.out { align-self:flex-end; flex-direction:row-reverse; max-width:82%; }
+.msg-row.in  { align-self:flex-start; max-width:100%; width:100%; }
+@media(max-width:500px) {
+  .msg-row.out { max-width:90%; }
+}
 
 .av { flex:0 0 28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-top:2px; flex-shrink:0; }
 .av.ai  { background:linear-gradient(135deg,var(--accent),var(--accent2)); }
@@ -388,15 +390,16 @@ body::before {
 
 .bubble {
   padding:11px 15px; border-radius:16px;
-  font-size:.875rem; line-height:1.65;
+  font-size:.915rem; line-height:1.75;
   word-break:break-word; overflow:hidden; min-width:0;
 }
 .msg-row.in .bubble {
-  background:var(--white);
-  border:1px solid var(--border);
-  border-bottom-left-radius:4px;
+  background:transparent;
+  border:none;
+  border-bottom-left-radius:0;
   color:var(--ink);
-  box-shadow:var(--shadow-sm);
+  box-shadow:none;
+  padding:2px 0;
 }
 .msg-row.out .bubble {
   background:var(--accent);
@@ -406,10 +409,34 @@ body::before {
 }
 
 /* Markdown in bubbles */
-.bubble strong { color:var(--ink); font-weight:600; }
+.bubble strong { font-weight:600; }
+.msg-row.in  .bubble strong { color:var(--ink); }
 .msg-row.out .bubble strong { color:#ffe0d0; }
-.bubble em { color:var(--ink3); font-style:italic; }
+.bubble em { font-style:italic; }
+.msg-row.in  .bubble em { color:var(--ink2); }
 .msg-row.out .bubble em { color:rgba(255,255,255,.8); }
+
+/* Claude-style prose structure */
+.bubble p { margin:0 0 .75em; }
+.bubble p:last-child { margin-bottom:0; }
+.bubble h1,.bubble h2,.bubble h3 {
+  font-weight:600; line-height:1.3; margin:1em 0 .35em; color:var(--ink);
+}
+.bubble h1 { font-size:1.05rem; }
+.bubble h2 { font-size:.97rem; }
+.bubble h3 { font-size:.9rem; }
+.bubble ul,.bubble ol {
+  margin:.4em 0 .75em 0; padding-left:1.4em;
+  display:flex; flex-direction:column; gap:.3em;
+}
+.bubble ul { list-style:disc; }
+.bubble ol { list-style:decimal; }
+.bubble li { padding-left:.2em; line-height:1.7; }
+.bubble li::marker { color:var(--ink3); font-size:.9em; }
+.msg-row.out .bubble ul,
+.msg-row.out .bubble ol { color:#fff; }
+.msg-row.out .bubble li::marker { color:rgba(255,255,255,.6); }
+.bubble hr { border:none; border-top:1px solid var(--border); margin:.8em 0; }
 .bubble code {
   font-family:var(--mono);
   background:var(--off2); border:1px solid var(--border);
@@ -473,16 +500,19 @@ body::before {
 .file-attach-name { color:var(--ink2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 /* Message actions */
-.msg-actions { display:flex; gap:3px; margin-top:4px; opacity:0; transition:opacity .18s; }
+.msg-actions {
+  display:flex; gap:1px; margin-top:3px;
+  opacity:0; transition:opacity .2s;
+}
 .msg-row:hover .msg-actions { opacity:1; }
 .mact {
   background:none; border:none; color:var(--ink4); cursor:pointer;
-  border-radius:5px; padding:3px 7px;
-  display:flex; align-items:center; gap:3px;
-  font-size:.65rem; font-family:var(--font); transition:color .15s;
+  border-radius:6px; padding:4px 6px;
+  display:flex; align-items:center; justify-content:center;
+  transition:color .15s, background .15s;
 }
-.mact svg { width:10px; height:10px; }
-.mact:hover { color:var(--ink2); }
+.mact svg { width:14px; height:14px; }
+.mact:hover { color:var(--ink2); background:var(--off2); }
 
 /* Welcome screen */
 .welcome {
@@ -1604,15 +1634,10 @@ function addMessage(type, text, imageUrl = null, files = []) {
   const row = document.createElement('div');
   row.className = `msg-row ${type}`;
 
-  const av = document.createElement('div');
-  av.className = `av ${type === 'in' ? 'ai' : 'usr'}`;
-  av.innerHTML = type === 'in'
-    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>'
-    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-
   const col = document.createElement('div');
-  col.style.cssText = 'min-width:0;overflow:hidden;display:flex;flex-direction:column;';
+  col.style.cssText = 'min-width:0;overflow:hidden;display:flex;flex-direction:column;flex:1;';
 
+  // File chips
   if (files.length) {
     files.forEach(f => {
       const fa = document.createElement('div');
@@ -1640,21 +1665,32 @@ function addMessage(type, text, imageUrl = null, files = []) {
 
   col.appendChild(bbl);
 
+  // Action buttons — AI only, icon-only, hover-reveal
   if (type === 'in') {
     const acts = document.createElement('div');
     acts.className = 'msg-actions';
+    const safeText = JSON.stringify(text);
     acts.innerHTML = `
-      <button class="mact" onclick="speak(${JSON.stringify(text)})">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>Speak
+      <button class="mact" title="Speak" onclick="speak(${safeText})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
       </button>
-      <button class="mact" onclick="copyText(${JSON.stringify(text)})">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy
+      <button class="mact" title="Copy" onclick="copyText(${safeText})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
       </button>`;
     col.appendChild(acts);
   }
 
-  if (type === 'in') { row.appendChild(av); row.appendChild(col); }
-  else               { row.appendChild(col); row.appendChild(av); }
+  if (type === 'in') {
+    // AI: small avatar + content
+    const av = document.createElement('div');
+    av.className = 'av ai';
+    av.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+    row.appendChild(av);
+    row.appendChild(col);
+  } else {
+    // User: no avatar — just the bubble, right-aligned
+    row.appendChild(col);
+  }
 
   document.getElementById('msgs').appendChild(row);
   row.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -1666,7 +1702,7 @@ function addTyping() {
   row.className = 'typing-row';
   row.innerHTML = `
     <div class="av ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
-    <div class="bubble" style="background:var(--white);border:1px solid var(--border);border-bottom-left-radius:4px;box-shadow:var(--shadow-sm);">
+    <div class="bubble" style="background:transparent;border:none;padding:2px 0;">
       <div class="typing-dots"><span></span><span></span><span></span></div>
     </div>`;
   document.getElementById('msgs').appendChild(row);
@@ -1674,35 +1710,80 @@ function addTyping() {
   return row;
 }
 
-// ── Markdown formatter ─────────────────────────────────────────────────────
+// ── Markdown formatter — Claude-style ─────────────────────────────────────
 function fmt(raw) {
-  let s = String(raw).replace(/\\n/g, '\n');
+  let s = String(raw).replace(/\r\n/g, '\n').replace(/\\n/g, '\n');
+
+  // 1. Extract fenced code blocks
   const blocks = [], inlines = [];
-  s = s.replace(/```(\w*)\r?\n?([\s\S]*?)```/g, (_, lang, code) => { blocks.push({ lang: lang.trim(), code }); return `\x00B${blocks.length-1}\x00`; });
-  s = s.replace(/`([^`\r\n]+)`/g, (_, code) => { inlines.push(code); return `\x00I${inlines.length-1}\x00`; });
-  s = he(s);
-  s = s.replace(/^### (.+)$/gm, '<strong style="display:block;font-size:.84rem;color:var(--ink);margin:10px 0 3px;">$1</strong>');
-  s = s.replace(/^## (.+)$/gm,  '<strong style="display:block;font-size:.9rem;color:var(--ink);margin:11px 0 4px;">$1</strong>');
-  s = s.replace(/^# (.+)$/gm,   '<strong style="display:block;font-size:.98rem;color:var(--ink);margin:12px 0 5px;">$1</strong>');
-  s = s.replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>');
-  s = s.replace(/\*(.+?)\*/gs,     '<em>$1</em>');
-  s = s.replace(/^- (.+)$/gm, '&nbsp;&nbsp;• $1');
-  s = s.replace(/\n/g, '<br>');
-  inlines.forEach((code, i) => { s = s.replace(`\x00I${i}\x00`, `<code>${he(code)}</code>`); });
-  blocks.forEach(({ lang, code }, i) => {
-    const blockId = `blk-${_blkId++}`;
-    s = s.replace(`\x00B${i}\x00`, `
-      <pre>
-        <div class="code-header">
-          <span class="lang-label">${lang ? he(lang) : 'code'}</span>
-          <button id="${blockId}" class="copy-code-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy
-          </button>
-        </div>
-        <code>${he(code)}</code>
-      </pre>`);
-    requestAnimationFrame(() => { const btn = document.getElementById(blockId); if (btn) btn.onclick = () => copyText(code); });
+  s = s.replace(/```(\w*)\r?\n?([\s\S]*?)```/g, (_, lang, code) => {
+    blocks.push({ lang: lang.trim(), code: code.replace(/\n$/, '') });
+    return `\x00B${blocks.length - 1}\x00`;
   });
+
+  // 2. Extract inline code
+  s = s.replace(/`([^`\r\n]+)`/g, (_, code) => {
+    inlines.push(code); return `\x00I${inlines.length - 1}\x00`;
+  });
+
+  // 3. HTML-escape the remaining text
+  s = he(s);
+
+  // 4. Headings (before bold so ## isn't eaten)
+  s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  s = s.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+  s = s.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+
+  // 5. Bold / italic
+  s = s.replace(/\*\*\*(.+?)\*\*\*/gs, '<strong><em>$1</em></strong>');
+  s = s.replace(/\*\*(.+?)\*\*/gs,     '<strong>$1</strong>');
+  s = s.replace(/\*(.+?)\*/gs,         '<em>$1</em>');
+
+  // 6. HR
+  s = s.replace(/^---+$/gm, '<hr>');
+
+  // 7. Restore inline code
+  inlines.forEach((code, i) => {
+    s = s.replace(`\x00I${i}\x00`, `<code>${he(code)}</code>`);
+  });
+
+  // 8. Restore code blocks
+  blocks.forEach(({ lang, code }, i) => {
+    const blkId = `blk-${_blkId++}`;
+    s = s.replace(`\x00B${i}\x00`,
+      `<pre><div class="code-header"><span class="lang-label">${lang ? he(lang) : 'code'}</span>` +
+      `<button id="${blkId}" class="copy-code-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>` +
+      `</div><code>${he(code)}</code></pre>`
+    );
+    requestAnimationFrame(() => { const btn = document.getElementById(blkId); if (btn) btn.onclick = () => copyText(code); });
+  });
+
+  // 9. Convert bullet lists into proper <ul><li> groups
+  // Collect consecutive "- ..." lines into one <ul>
+  s = s.replace(/((?:^- .+\n?)+)/gm, listBlock => {
+    const items = listBlock.trim().split('\n').map(l => l.replace(/^- /, '').trim());
+    return '<ul>' + items.map(it => `<li>${it}</li>`).join('') + '</ul>';
+  });
+
+  // 10. Numbered lists "1. ..." → <ol>
+  s = s.replace(/((?:^\d+\. .+\n?)+)/gm, listBlock => {
+    const items = listBlock.trim().split('\n').map(l => l.replace(/^\d+\. /, '').trim());
+    return '<ol>' + items.map(it => `<li>${it}</li>`).join('') + '</ol>';
+  });
+
+  // 11. Wrap plain text lines into <p> tags
+  // Split on double-newlines to get paragraph groups
+  const parts = s.split(/\n\n+/);
+  s = parts.map(part => {
+    const trimmed = part.trim();
+    if (!trimmed) return '';
+    // Already a block-level element
+    if (/^<(h[1-3]|ul|ol|pre|hr|blockquote)[\s>]/.test(trimmed)) return trimmed;
+    // Single or multi-line paragraph — collapse single newlines to <br> within a <p>
+    const inner = trimmed.replace(/\n/g, '<br>');
+    return `<p>${inner}</p>`;
+  }).filter(Boolean).join('\n');
+
   return s;
 }
 function he(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
