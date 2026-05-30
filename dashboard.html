@@ -1591,6 +1591,7 @@ async function sendMessage() {
 
   try {
     const systemPrompt = buildSystemPrompt();
+    console.log('[BC] Sending to provider:', PROVIDER, '| model:', MODEL);
 
     if (PROVIDER === 'groq') {
       // ── Groq via backend proxy (key stored server-side in .env) ──────
@@ -1619,8 +1620,10 @@ async function sendMessage() {
       });
 
       typingEl?.remove();
+      console.log('[BC] Groq response status:', r.status);
       let data;
       try { data = await r.json(); } catch { throw new Error(`Groq error ${r.status}: invalid response`); }
+      console.log('[BC] Groq data:', JSON.stringify(data).slice(0,200));
       if (!r.ok) throw new Error(data.error?.message || data.error || `Groq error ${r.status}`);
       reply = (data.choices?.[0]?.message?.content || '').trim() || 'No response generated.';
 
@@ -1679,13 +1682,13 @@ async function sendMessage() {
 
   } catch (e) {
     typingEl?.remove();
+    console.error('[BC] Error:', e.name, e.message);
     if (e.name === 'AbortError') {
-      addMessage('in', 'Request timed out. The server may be starting up — please try again.');
+      addMessage('in', 'Request timed out (30s). Server may be starting up — wait 30 seconds and try again.');
     } else {
       const errMsg = e.message || 'Something went wrong. Please try again.';
       addMessage('in', errMsg);
     }
-    console.error('ByteChief error:', e);
   } finally {
     clearTimeout(timeoutId);
     abortCtrl = null;
