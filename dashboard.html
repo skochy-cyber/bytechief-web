@@ -828,30 +828,34 @@ function logout() {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 function setUserDisplay(nameOrEmail) {
-  const display = nameOrEmail || 'User';
+  const display = (nameOrEmail && nameOrEmail.trim()) ? nameOrEmail.trim() : 'User';
   document.getElementById('uname').textContent = display;
   document.getElementById('uav').textContent = display[0].toUpperCase();
 }
 
-function init() {
+function getBestName() {
+  // 1. Try bc_user from storage
   try {
-    const raw = sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}';
-    const u = JSON.parse(raw);
-    // Also try decoding the JWT payload (base64) for email if bc_user is stale
-    let email = u.email || '';
-    if (!email) {
-      try {
-        const token = getToken();
-        if (token) {
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          email = payload.email || '';
-        }
-      } catch {}
-    }
-    const d = (u.name && u.name.trim()) || (email ? email.split('@')[0] : 'User');
-    setUserDisplay(d);
-    mem.name = d;
+    const u = JSON.parse(sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}');
+    if (u.name && u.name.trim()) return u.name.trim();
+    if (u.email && u.email.trim()) return u.email.split('@')[0];
   } catch {}
+  // 2. Decode JWT payload directly
+  try {
+    const token = getToken();
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.name && payload.name.trim()) return payload.name.trim();
+      if (payload.email && payload.email.trim()) return payload.email.split('@')[0];
+    }
+  } catch {}
+  return '';
+}
+
+function init() {
+  const name = getBestName();
+  setUserDisplay(name || 'User');
+  mem.name = name || 'User';
   updateTTS();
   loadMemory();
 }
@@ -860,25 +864,22 @@ init();
 async function loadMemory() {
   try {
     const r = await fetch('/api/memory', { headers: { Authorization: 'Bearer ' + getToken() } });
-    if (r.ok) {
-      const d = await r.json();
-      // Best name source: DB name → DB email prefix → stored token email → 'User'
-      const displayName = (d.name && d.name.trim())
-        || (d.email ? d.email.split('@')[0] : '')
-        || (req => {
-          try {
-            const u = JSON.parse(sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}');
-            return (u.name && u.name.trim()) || (u.email ? u.email.split('@')[0] : '');
-          } catch { return ''; }
-        })()
-        || 'User';
-      setUserDisplay(displayName);
-      mem.name = displayName;
-      mem.contacts = d.memory?.contacts || {};
-      mem.preferences = d.memory?.preferences || {};
-      mem.facts = d.memory?.facts || [];
-      renderMemory();
+    if (!r.ok) return;
+    const d = await r.json();
+    // Server is the source of truth for name
+    const serverName = (d.name && d.name.trim())
+      ? d.name.trim()
+      : (d.email && d.email.trim())
+        ? d.email.split('@')[0]
+        : getBestName();
+    if (serverName) {
+      setUserDisplay(serverName);
+      mem.name = serverName;
     }
+    mem.contacts    = d.memory?.contacts    || {};
+    mem.preferences = d.memory?.preferences || {};
+    mem.facts       = d.memory?.facts       || [];
+    renderMemory();
   } catch {}
 }
 
