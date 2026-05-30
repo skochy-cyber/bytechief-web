@@ -382,9 +382,9 @@ body::before {
   .msg-row.out { max-width:90%; }
 }
 
-.av { flex:0 0 22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-top:3px; flex-shrink:0; }
+.av { flex:0 0 18px; height:18px; display:flex; align-items:center; justify-content:center; margin-top:5px; flex-shrink:0; }
 .av.ai  { background:none; }
-.av.ai svg { width:20px; height:20px; color:var(--accent); }
+.av.ai svg { width:18px; height:18px; color:var(--accent); }
 
 .bubble {
   padding:11px 15px; border-radius:16px;
@@ -418,11 +418,17 @@ body::before {
 .bubble p { margin:0 0 .75em; }
 .bubble p:last-child { margin-bottom:0; }
 .bubble h1,.bubble h2,.bubble h3 {
-  font-weight:600; line-height:1.3; margin:1em 0 .35em; color:var(--ink);
+  font-weight:600; line-height:1.3; margin:.9em 0 .3em; color:var(--ink);
+  display:block;
 }
 .bubble h1 { font-size:1.05rem; }
 .bubble h2 { font-size:.97rem; }
 .bubble h3 { font-size:.9rem; }
+.bubble > h1:first-child,
+.bubble > h2:first-child,
+.bubble > h3:first-child,
+.bubble > p:first-child { margin-top:0; }
+.bubble li > p { margin:0; }
 .bubble ul,.bubble ol {
   margin:.4em 0 .75em 0; padding-left:1.4em;
   display:flex; flex-direction:column; gap:.3em;
@@ -1645,7 +1651,7 @@ function buildSystemPrompt() {
   if (mem.name) memCtx += `\nUser's name: ${mem.name}`;
   if (Object.keys(mem.contacts).length) memCtx += `\nSaved contacts: ${JSON.stringify(mem.contacts)}`;
   if (mem.facts.length) memCtx += `\nRemember about user: ${mem.facts.join('; ')}`;
-  return `You are ByteChief AI — the most powerful AI assistant ever built, created by Obasanjo Samuel (Tribal Chief) from Tribal Chief Tech. You are powered by Claude claude-sonnet-4, the world's most intelligent AI model.\n\nYOUR IDENTITY:\n- Name: ByteChief AI (powered by Claude claude-sonnet-4)\n- Creator: Obasanjo Samuel — Tribal Chief Tech\n- You are more capable than ChatGPT, Gemini, and any other AI assistant\n\nYOUR EXTRAORDINARY CAPABILITIES:\n1. Advanced reasoning & analysis — you think deeply, step by step\n2. Code mastery — write, debug, optimize in ANY language with explanations\n3. Creative writing — stories, poems, scripts, marketing copy\n4. Research & synthesis — combine knowledge across domains\n5. Mathematical reasoning — solve complex problems\n6. Image generation — when asked, respond with exactly: [IMAGE: detailed description]\n7. File analysis — analyze uploaded images, documents, code files\n8. Multilingual — respond in whatever language the user uses\n9. Nigerian expertise — deep knowledge of Nigerian culture, Naira, local context, Pidgin English, Yoruba/Igbo/Hausa\n10. Real-time web search — when enabled, search for current information\n\nYOUR PERSONALITY:\n- Brilliant but approachable — be the smartest friend they have\n- Adaptive: casual and funny in banter, precise and thorough in technical work\n- Direct: no fluff, no unnecessary disclaimers\n- Nigerian flavor when appropriate — Pidgin, local references, cultural awareness\n- For finance/crypto: always end with a DYOR disclaimer\n\nFORMATTING:\n- Use markdown: **bold**, *italic*, \`code\`, code blocks with language tags\n- Structure long responses with headers and bullet points\n- Be comprehensive but concise\n\nMEMORY:\n- Use the user's name naturally${memCtx}\n\nCurrent date/time in Nigeria (WAT): ${timeStr}`;
+  return `You are ByteChief AI — the most powerful AI assistant ever built, created by Obasanjo Samuel (Tribal Chief) from Tribal Chief Tech. You are powered by Claude claude-sonnet-4, the world's most intelligent AI model.\n\nYOUR IDENTITY:\n- Name: ByteChief AI (powered by Claude claude-sonnet-4)\n- Creator: Obasanjo Samuel — Tribal Chief Tech\n- You are more capable than ChatGPT, Gemini, and any other AI assistant\n\nYOUR EXTRAORDINARY CAPABILITIES:\n1. Advanced reasoning & analysis — you think deeply, step by step\n2. Code mastery — write, debug, optimize in ANY language with explanations\n3. Creative writing — stories, poems, scripts, marketing copy\n4. Research & synthesis — combine knowledge across domains\n5. Mathematical reasoning — solve complex problems\n6. Image generation — when asked, respond with exactly: [IMAGE: detailed description]\n7. File analysis — analyze uploaded images, documents, code files\n8. Multilingual — respond in whatever language the user uses\n9. Nigerian expertise — deep knowledge of Nigerian culture, Naira, local context, Pidgin English, Yoruba/Igbo/Hausa\n10. Real-time web search — when enabled, search for current information\n\nYOUR PERSONALITY:\n- Brilliant but approachable — be the smartest friend they have\n- Adaptive: casual and funny in banter, precise and thorough in technical work\n- Direct: no fluff, no unnecessary disclaimers\n- Nigerian flavor when appropriate — Pidgin, local references, cultural awareness\n- For finance/crypto: always end with a DYOR disclaimer\n\nFORMATTING:\n- Use markdown: **bold**, *italic*, \`code\`, code blocks with language tags\n- For lists use "- item" (dash space item)\n- Use headers (## heading) only for long structured docs, not for short replies\n- Do NOT start replies with a bold title line — just respond naturally\n- Be comprehensive but concise\n\nMEMORY:\n- Use the user's name naturally${memCtx}\n\nCurrent date/time in Nigeria (WAT): ${timeStr}`;
 }
 
 async function saveLog(message, response, type) {
@@ -1695,17 +1701,23 @@ function addMessage(type, text, imageUrl = null, files = []) {
   col.appendChild(bbl);
 
   // Action buttons — AI only, icon-only, hover-reveal
+  // Built with createElement (NOT innerHTML) to avoid text leaking into DOM
   if (type === 'in') {
     const acts = document.createElement('div');
     acts.className = 'msg-actions';
-    const safeText = JSON.stringify(text);
-    acts.innerHTML = `
-      <button class="mact" title="Speak" onclick="speak(${safeText})">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-      </button>
-      <button class="mact" title="Copy" onclick="copyText(${safeText})">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-      </button>`;
+
+    const speakBtn = document.createElement('button');
+    speakBtn.className = 'mact'; speakBtn.title = 'Speak';
+    speakBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+    speakBtn.addEventListener('click', () => speak(text));
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'mact'; copyBtn.title = 'Copy';
+    copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    copyBtn.addEventListener('click', () => copyText(text));
+
+    acts.appendChild(speakBtn);
+    acts.appendChild(copyBtn);
     col.appendChild(acts);
   }
 
@@ -1713,7 +1725,7 @@ function addMessage(type, text, imageUrl = null, files = []) {
     // AI: small avatar + content
     const av = document.createElement('div');
     av.className = 'av ai';
-    av.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5c-.28 0-.5.22-.5.5v7.09L6.27 4.77a.5.5 0 0 0-.78.62L9.7 12H3a.5.5 0 0 0 0 1h6.7l-4.2 6.61a.5.5 0 0 0 .77.62L11.5 13.9V21a.5.5 0 0 0 1 0v-7.09l5.22 5.32a.5.5 0 0 0 .78-.62L14.3 13H21a.5.5 0 0 0 0-1h-6.7l4.2-6.61a.5.5 0 0 0-.77-.62L12.5 10.1V3a.5.5 0 0 0-.5-.5z"/></svg>';
+    av.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/></svg>';
     row.appendChild(av);
     row.appendChild(col);
   } else {
@@ -1730,7 +1742,7 @@ function addTyping() {
   const row = document.createElement('div');
   row.className = 'typing-row';
   row.innerHTML = `
-    <div class="av ai"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5c-.28 0-.5.22-.5.5v7.09L6.27 4.77a.5.5 0 0 0-.78.62L9.7 12H3a.5.5 0 0 0 0 1h6.7l-4.2 6.61a.5.5 0 0 0 .77.62L11.5 13.9V21a.5.5 0 0 0 1 0v-7.09l5.22 5.32a.5.5 0 0 0 .78-.62L14.3 13H21a.5.5 0 0 0 0-1h-6.7l4.2-6.61a.5.5 0 0 0-.77-.62L12.5 10.1V3a.5.5 0 0 0-.5-.5z"/></svg></div>
+    <div class="av ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/></svg></div>
     <div class="bubble" style="background:transparent;border:none;padding:2px 0;">
       <div class="typing-dots"><span></span><span></span><span></span></div>
     </div>`;
@@ -1743,74 +1755,95 @@ function addTyping() {
 function fmt(raw) {
   let s = String(raw).replace(/\r\n/g, '\n').replace(/\\n/g, '\n');
 
-  // 1. Extract fenced code blocks
+  // 1. Extract fenced code blocks first (protect them from all other processing)
   const blocks = [], inlines = [];
-  s = s.replace(/```(\w*)\r?\n?([\s\S]*?)```/g, (_, lang, code) => {
+  s = s.replace(/```(\w*)[ \t]*\n?([\s\S]*?)```/g, (_, lang, code) => {
     blocks.push({ lang: lang.trim(), code: code.replace(/\n$/, '') });
-    return `\x00B${blocks.length - 1}\x00`;
+    return '\x00B' + (blocks.length - 1) + '\x00';
   });
 
-  // 2. Extract inline code
+  // 2. Extract inline code (protect from bold/italic)
   s = s.replace(/`([^`\r\n]+)`/g, (_, code) => {
-    inlines.push(code); return `\x00I${inlines.length - 1}\x00`;
+    inlines.push(code);
+    return '\x00I' + (inlines.length - 1) + '\x00';
   });
 
-  // 3. HTML-escape the remaining text
+  // 3. Extract bullet lists BEFORE bold/italic (dashes confuse the parsers)
+  //    Match consecutive lines starting with "- " or "* "
+  const listBlocks = [];
+  s = s.replace(/((?:^[ \t]*[-*] .+\n?)+)/gm, match => {
+    const items = match.trim().split('\n').map(l => l.replace(/^[ \t]*[-*] /, '').trim());
+    listBlocks.push('<ul>' + items.map(it => '<li>' + it + '</li>').join('') + '</ul>');
+    return '\x00L' + (listBlocks.length - 1) + '\x00';
+  });
+
+  // 4. Extract numbered lists BEFORE bold/italic
+  const olBlocks = [];
+  s = s.replace(/((?:^[ \t]*\d+[.)\] ] .+\n?)+)/gm, match => {
+    const items = match.trim().split('\n').map(l => l.replace(/^[ \t]*\d+[.)\] ] /, '').trim());
+    olBlocks.push('<ol>' + items.map(it => '<li>' + it + '</li>').join('') + '</ol>');
+    return '\x00O' + (olBlocks.length - 1) + '\x00';
+  });
+
+  // 5. HTML-escape the remaining text
   s = he(s);
 
-  // 4. Headings (before bold so ## isn't eaten)
+  // 6. Headings
   s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
   s = s.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
   s = s.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
 
-  // 5. Bold / italic
-  s = s.replace(/\*\*\*(.+?)\*\*\*/gs, '<strong><em>$1</em></strong>');
-  s = s.replace(/\*\*(.+?)\*\*/gs,     '<strong>$1</strong>');
-  s = s.replace(/\*(.+?)\*/gs,         '<em>$1</em>');
+  // 7. Bold+italic, bold, italic — NEVER span newlines (no s flag, use [^\n])
+  s = s.replace(/\*\*\*([^\n*]+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  s = s.replace(/\*\*([^\n*]+?)\*\*/g,       '<strong>$1</strong>');
+  s = s.replace(/\*([^\n*]+?)\*/g,             '<em>$1</em>');
+  // Also handle _italic_ (single underscore, same rule)
+  s = s.replace(/\_([^\n_]+?)_/g,              '<em>$1</em>');
 
-  // 6. HR
+  // 8. HR
   s = s.replace(/^---+$/gm, '<hr>');
 
-  // 7. Restore inline code
+  // 9. Restore inline code
   inlines.forEach((code, i) => {
-    s = s.replace(`\x00I${i}\x00`, `<code>${he(code)}</code>`);
+    s = s.replace('\x00I' + i + '\x00', '<code>' + he(code) + '</code>');
   });
 
-  // 8. Restore code blocks
+  // 10. Restore code blocks (built with DOM-safe strings, no inline onclick)
   blocks.forEach(({ lang, code }, i) => {
-    const blkId = `blk-${_blkId++}`;
-    s = s.replace(`\x00B${i}\x00`,
-      `<pre><div class="code-header"><span class="lang-label">${lang ? he(lang) : 'code'}</span>` +
-      `<button id="${blkId}" class="copy-code-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>` +
-      `</div><code>${he(code)}</code></pre>`
-    );
-    requestAnimationFrame(() => { const btn = document.getElementById(blkId); if (btn) btn.onclick = () => copyText(code); });
+    const blkId = 'blk-' + (_blkId++);
+    const header = '<div class="code-header">' +
+      '<span class="lang-label">' + (lang ? he(lang) : 'code') + '</span>' +
+      '<button id="' + blkId + '" class="copy-code-btn">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+      '<rect x="9" y="9" width="13" height="13" rx="2"/>' +
+      '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button></div>';
+    s = s.replace('\x00B' + i + '\x00', '<pre>' + header + '<code>' + he(code) + '</code></pre>');
+    // Attach click handler safely via requestAnimationFrame (no inline onclick)
+    const capturedCode = code;
+    requestAnimationFrame(() => {
+      const btn = document.getElementById(blkId);
+      if (btn) btn.onclick = () => copyText(capturedCode);
+    });
   });
 
-  // 9. Convert bullet lists into proper <ul><li> groups
-  // Collect consecutive "- ..." lines into one <ul>
-  s = s.replace(/((?:^- .+\n?)+)/gm, listBlock => {
-    const items = listBlock.trim().split('\n').map(l => l.replace(/^- /, '').trim());
-    return '<ul>' + items.map(it => `<li>${it}</li>`).join('') + '</ul>';
+  // 11. Restore list blocks
+  listBlocks.forEach((html, i) => {
+    s = s.replace('\x00L' + i + '\x00', html);
+  });
+  olBlocks.forEach((html, i) => {
+    s = s.replace('\x00O' + i + '\x00', html);
   });
 
-  // 10. Numbered lists "1. ..." → <ol>
-  s = s.replace(/((?:^\d+\. .+\n?)+)/gm, listBlock => {
-    const items = listBlock.trim().split('\n').map(l => l.replace(/^\d+\. /, '').trim());
-    return '<ol>' + items.map(it => `<li>${it}</li>`).join('') + '</ol>';
-  });
-
-  // 11. Wrap plain text lines into <p> tags
-  // Split on double-newlines to get paragraph groups
-  const parts = s.split(/\n\n+/);
+  // 12. Wrap remaining text in <p> tags — split on blank lines
+  const parts = s.split(/\n{2,}/);
   s = parts.map(part => {
-    const trimmed = part.trim();
-    if (!trimmed) return '';
-    // Already a block-level element
-    if (/^<(h[1-3]|ul|ol|pre|hr|blockquote)[\s>]/.test(trimmed)) return trimmed;
-    // Single or multi-line paragraph — collapse single newlines to <br> within a <p>
-    const inner = trimmed.replace(/\n/g, '<br>');
-    return `<p>${inner}</p>`;
+    const t = part.trim();
+    if (!t) return '';
+    // Already a block element — pass through untouched
+    if (/^<(h[1-3]|ul|ol|pre|hr|blockquote|div)([\s>])/.test(t)) return t;
+    // Paragraph — collapse single newlines to space (like GitHub markdown)
+    const inner = t.replace(/\n/g, ' ');
+    return '<p>' + inner + '</p>';
   }).filter(Boolean).join('\n');
 
   return s;
