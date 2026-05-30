@@ -185,12 +185,12 @@ app.post('/api/login', async (req, res) => {
 app.get('/api/memory', authMw, async (req, res) => {
   try {
     if (MONGO_URI) {
-      const u = await User.findById(req.user.id).select('name memory');
+      const u = await User.findById(req.user.id).select('name email memory');
       if (!u) return res.status(404).json({ error: 'User not found' });
-      return res.json({ name: u.name, memory: u.memory });
+      return res.json({ name: u.name, email: u.email, memory: u.memory });
     }
     const u = memUsers.find(u => u.id == req.user.id);
-    res.json({ name: u?.name||'', memory: u?.memory||{} });
+    res.json({ name: u?.name||'', email: u?.email||req.user.email||'', memory: u?.memory||{} });
   } catch (e) { res.status(500).json({ error: 'Failed to fetch memory' }); }
 });
 
