@@ -1171,8 +1171,7 @@ async function sendMessage() {
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || `Groq error ${r.status}`);
       reply = data.choices?.[0]?.message?.content || 'No response generated.';
-      const data = await r.json();
-      if (!r.ok) {
+
     } else {
       // ── Anthropic ─────────────────────────────────────────────────────
       const tools = webSearch ? [{ type: 'web_search_20250305', name: 'web_search' }] : undefined;
