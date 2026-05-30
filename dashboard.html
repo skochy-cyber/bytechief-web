@@ -1050,7 +1050,8 @@ function getUserKey() {
   try {
     const token = localStorage.getItem('bc_token') || sessionStorage.getItem('bc_token') || '';
     if (token) {
-      const p = JSON.parse(atob(token.split('.')[1]));
+      const raw = token.split('.')[1]; let b64 = raw.replace(/-/g,'+').replace(/_/g,'/'); while(b64.length%4)b64+='=';
+      const p = JSON.parse(atob(b64));
       const uid = p.sub || p.id || p._id || p.email || 'default';
       let h = 0;
       for (let i = 0; i < uid.length; i++) { h = ((h << 5) - h + uid.charCodeAt(i)) | 0; }
@@ -1227,26 +1228,52 @@ function setUserDisplay(nameOrEmail) {
 }
 
 function getBestName() {
-  // 1. Decode JWT — always present, always has email at minimum
+  // Try every possible source — return first non-empty, non-generic result
+
+  // 0. bc_name flat key — set directly at login, simplest possible read
   try {
-    const token = getToken();
-    if (token) {
-      // JWT uses base64url: replace - with + and _ with / before atob
-      const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(atob(b64));
-      if (payload.name && payload.name.trim() && payload.name.trim() !== 'User') return payload.name.trim();
-      if (payload.email && payload.email.trim()) return payload.email.split('@')[0];
-    }
+    const n = sessionStorage.getItem('bc_name') || localStorage.getItem('bc_name');
+    if (n && n.trim() && n.trim().toLowerCase() !== 'user') return n.trim();
+    const e = sessionStorage.getItem('bc_email') || localStorage.getItem('bc_email');
+    if (e && e.trim()) return e.split('@')[0];
   } catch {}
-  // 2. Try bc_user from storage as fallback
+
+  // 1. bc_user in sessionStorage (set synchronously at login — most reliable)
   try {
-    const stored = sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user');
-    if (stored) {
-      const u = JSON.parse(stored);
-      if (u.name && u.name.trim() && u.name.trim() !== 'User') return u.name.trim();
+    const s = sessionStorage.getItem('bc_user');
+    if (s) {
+      const u = JSON.parse(s);
+      if (u.name && u.name.trim() && u.name.trim().toLowerCase() !== 'user') return u.name.trim();
       if (u.email && u.email.trim()) return u.email.split('@')[0];
     }
   } catch {}
+
+  // 2. bc_user in localStorage (remember-me sessions)
+  try {
+    const s = localStorage.getItem('bc_user');
+    if (s) {
+      const u = JSON.parse(s);
+      if (u.name && u.name.trim() && u.name.trim().toLowerCase() !== 'user') return u.name.trim();
+      if (u.email && u.email.trim()) return u.email.split('@')[0];
+    }
+  } catch {}
+
+  // 3. Decode JWT payload (base64url safe)
+  try {
+    const token = getToken();
+    if (token) {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        // Pad base64url to multiple of 4
+        let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4) b64 += '=';
+        const payload = JSON.parse(atob(b64));
+        if (payload.name && payload.name.trim() && payload.name.trim().toLowerCase() !== 'user') return payload.name.trim();
+        if (payload.email && payload.email.trim()) return payload.email.split('@')[0];
+      }
+    }
+  } catch {}
+
   return '';
 }
 
@@ -1281,11 +1308,11 @@ async function loadMemory() {
     if (!r.ok) return;
     const d = await r.json();
     // Server is the source of truth for name
-    const serverName = (d.name && d.name.trim())
+    const serverName = (d.name && d.name.trim() && d.name.trim().toLowerCase() !== 'user')
       ? d.name.trim()
       : (d.email && d.email.trim())
         ? d.email.split('@')[0]
-        : getBestName();
+        : '';
     const finalName = serverName || getBestName() || 'User';
     setUserDisplay(finalName);
     mem.name = finalName;
@@ -2051,6 +2078,15 @@ function copyText(t) { navigator.clipboard?.writeText(t).then(() => toast('Copie
 function updateTTS() { document.getElementById('ttsBtn').classList.toggle('on', ttsOn); }
 function toggleTTS() { ttsOn = !ttsOn; localStorage.setItem('bc_tts', ttsOn ? '1' : '0'); updateTTS(); toast(ttsOn ? 'Voice on' : 'Voice off', ttsOn ? 'ok' : ''); }
 updateTTS(); // safe to call now — init() skipped this since it wasn't defined yet
+
+// Final name safety-net: after everything loads, re-check and fix if still showing generic
+setTimeout(() => {
+  const currentDisplay = document.getElementById('uname')?.textContent || '';
+  if (!currentDisplay || currentDisplay === 'User' || currentDisplay === 'Loading...' || currentDisplay === '?') {
+    const name = getBestName();
+    if (name) setUserDisplay(name);
+  }
+}, 500);
 function speak(txt) {
   if (!window.speechSynthesis) return;
   const p = txt.replace(/<[^>]+>/g,'').replace(/[*`#\[\]]/g,'').trim().slice(0, 600);
