@@ -278,9 +278,9 @@ app.get('/api/admin/stats', authMw, adminMw, async (req, res) => {
       const recentLogs = await ChatLog.find().sort({ createdAt: -1 }).limit(20).lean();
       const topUsers = await User.find().sort({ totalMessages: -1 }).limit(10)
         .select('email name totalMessages lastActive').lean();
-      res.json({ users, logs, invites, recentLogs, topUsers, model: 'claude-sonnet-4-20250514' });
+      res.json({ totalUsers: users, totalLogs: logs, totalInvites: invites, recentLogs, topUsers, model: 'claude-sonnet-4-20250514' });
     } else {
-      res.json({ users: memUsers.length, logs: memLogs.length, invites: memInvites.filter(i=>!i.used).length,
+      res.json({ totalUsers: memUsers.length, totalLogs: memLogs.length, totalInvites: memInvites.filter(i=>!i.used).length,
         recentLogs: memLogs.slice(-20).reverse(), topUsers: [], model: 'claude-sonnet-4-20250514' });
     }
   } catch (e) { res.status(500).json({ error: 'Stats failed' }); }
@@ -291,7 +291,7 @@ app.get('/api/admin/users', authMw, adminMw, async (req, res) => {
     const users = MONGO_URI
       ? await User.find().select('-password').sort({ createdAt: -1 }).lean()
       : memUsers.map(({ password, ...u }) => u);
-    res.json(users);
+    res.json({ users });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -305,18 +305,20 @@ app.delete('/api/admin/users/:id', authMw, adminMw, async (req, res) => {
 
 app.post('/api/admin/invites', authMw, adminMw, async (req, res) => {
   const { email, count = 1 } = req.body;
-  const codes = [];
+  const invites = [];
   try {
     for (let i = 0; i < Math.min(count, 20); i++) {
       const code = Math.random().toString(36).slice(2,8).toUpperCase();
       if (MONGO_URI) {
-        await Invite.create({ code, email: email || '', createdBy: req.user.email || 'admin' });
+        const inv = await Invite.create({ code, email: email || '', createdBy: req.user.email || 'admin' });
+        invites.push(inv);
       } else {
-        memInvites.push({ code, email: email||'', used:false, id:memIdSeq++ });
+        const inv = { code, email: email||'', used:false, id:memIdSeq++ };
+        memInvites.push(inv);
+        invites.push(inv);
       }
-      codes.push(code);
     }
-    res.json({ codes });
+    res.json({ invites });
   } catch (e) { res.status(500).json({ error: 'Invite creation failed' }); }
 });
 
@@ -325,7 +327,7 @@ app.get('/api/admin/invites', authMw, adminMw, async (req, res) => {
     const invites = MONGO_URI
       ? await Invite.find().sort({ createdAt: -1 }).limit(100).lean()
       : memInvites.slice(-100).reverse();
-    res.json(invites);
+    res.json({ invites });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -334,7 +336,7 @@ app.get('/api/admin/logs', authMw, adminMw, async (req, res) => {
     const logs = MONGO_URI
       ? await ChatLog.find().sort({ createdAt: -1 }).limit(100).lean()
       : memLogs.slice(-100).reverse();
-    res.json(logs);
+    res.json({ logs });
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
