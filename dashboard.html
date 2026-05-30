@@ -856,7 +856,7 @@ function init() {
   const name = getBestName();
   setUserDisplay(name || 'User');
   mem.name = name || 'User';
-  updateTTS();
+  // updateTTS called after all functions defined — see bottom of script
   loadMemory();
 }
 init();
@@ -1364,6 +1364,7 @@ function copyText(t) { navigator.clipboard?.writeText(t).then(() => toast('Copie
 // ── TTS ────────────────────────────────────────────────────────────────────
 function updateTTS() { document.getElementById('ttsBtn').classList.toggle('on', ttsOn); }
 function toggleTTS() { ttsOn = !ttsOn; localStorage.setItem('bc_tts', ttsOn ? '1' : '0'); updateTTS(); toast(ttsOn ? 'Voice on' : 'Voice off', ttsOn ? 'ok' : ''); }
+updateTTS(); // safe to call now — init() skipped this since it wasn't defined yet
 function speak(txt) {
   if (!window.speechSynthesis) return;
   const p = txt.replace(/<[^>]+>/g,'').replace(/[*`#\[\]]/g,'').trim().slice(0, 600);
