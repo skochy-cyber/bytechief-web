@@ -800,7 +800,7 @@ body::before {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
     </button>
     <div class="avatar-pill" onclick="logout()">
-      <div class="av-circle" id="uav">B</div>
+      <div class="av-circle" id="uav">?</div>
       <span class="av-name" id="uname">User</span>
     </div>
   </div>
@@ -1211,16 +1211,19 @@ function setUserDisplay(nameOrEmail) {
 function getBestName() {
   // 1. Try bc_user from storage
   try {
-    const u = JSON.parse(sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user') || '{}');
-    if (u.name && u.name.trim()) return u.name.trim();
-    if (u.email && u.email.trim()) return u.email.split('@')[0];
+    const stored = sessionStorage.getItem('bc_user') || localStorage.getItem('bc_user');
+    if (stored) {
+      const u = JSON.parse(stored);
+      if (u.name && u.name.trim() && u.name.trim() !== 'User') return u.name.trim();
+      if (u.email && u.email.trim()) return u.email.split('@')[0];
+    }
   } catch {}
   // 2. Decode JWT payload directly
   try {
     const token = getToken();
     if (token) {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      if (payload.name && payload.name.trim()) return payload.name.trim();
+      if (payload.name && payload.name.trim() && payload.name.trim() !== 'User') return payload.name.trim();
       if (payload.email && payload.email.trim()) return payload.email.split('@')[0];
     }
   } catch {}
@@ -1262,10 +1265,9 @@ async function loadMemory() {
       : (d.email && d.email.trim())
         ? d.email.split('@')[0]
         : getBestName();
-    if (serverName) {
-      setUserDisplay(serverName);
-      mem.name = serverName;
-    }
+    const finalName = serverName || getBestName() || 'User';
+    setUserDisplay(finalName);
+    mem.name = finalName;
     mem.contacts    = d.memory?.contacts    || {};
     mem.preferences = d.memory?.preferences || {};
     mem.facts       = d.memory?.facts       || [];
