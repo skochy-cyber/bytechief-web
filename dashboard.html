@@ -294,6 +294,19 @@ body::before {
 }
 .sb-recent-item:hover { background:#252525; color:#e0e0e0; }
 .sb-recent-item.active { background:#2a2a2a; color:#fff; }
+.sb-recent-row {
+  display:flex; align-items:center; gap:2px;
+  border-radius:8px; overflow:hidden;
+}
+.sb-recent-row:hover .sb-recent-del { opacity:1; }
+.sb-recent-del {
+  flex-shrink:0; width:28px; height:36px;
+  background:none; border:none; cursor:pointer;
+  color:#555; opacity:0; transition:opacity .15s, color .15s;
+  display:flex; align-items:center; justify-content:center;
+}
+.sb-recent-del:hover { color:#e05a3a; }
+.sb-recent-del svg { width:13px; height:13px; }
 
 .sb-divider { height:1px; background:#252525; margin:8px 12px; }
 
@@ -769,7 +782,7 @@ body::before {
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sb">
     <!-- Header -->
-    <div class="sb-header">Claude</div>
+    <div class="sb-header">ByteChief AI</div>
 
     <!-- Nav items -->
     <nav class="sb-nav">
@@ -995,6 +1008,109 @@ let mem          = { name: '', contacts: {}, preferences: {}, facts: [] };
 let voiceRec     = null;
 let isRecording  = false;
 
+// ── Chat History (localStorage) ───────────────────────────────────────────
+const CHATS_KEY    = 'bc_chats';    // index: [{id, title, ts}]
+const CHAT_PRE     = 'bc_chat_';    // bc_chat_<id>: {history:[...], messages:[{type,text,imageUrl}]}
+let activeChatId   = null;
+
+function genChatId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function getChatIndex() {
+  try { return JSON.parse(localStorage.getItem(CHATS_KEY) || '[]'); } catch { return []; }
+}
+function saveChatIndex(index) {
+  localStorage.setItem(CHATS_KEY, JSON.stringify(index));
+}
+
+function saveActiveChat() {
+  if (!activeChatId) return;
+  // Collect rendered messages
+  const msgs = [];
+  document.querySelectorAll('#msgs .msg-row').forEach(row => {
+    const type = row.classList.contains('in') ? 'in' : 'out';
+    const bubble = row.querySelector('.bubble');
+    if (!bubble) return;
+    // Get raw text from data attr if set, else innerText
+    const text = bubble.dataset.raw || bubble.innerText;
+    const img = row.querySelector('.gen-img');
+    msgs.push({ type, text, imageUrl: img ? img.src : null });
+  });
+  const data = { history, messages: msgs };
+  localStorage.setItem(CHAT_PRE + activeChatId, JSON.stringify(data));
+}
+
+function startNewChatSession(title) {
+  const id = genChatId();
+  activeChatId = id;
+  const index = getChatIndex();
+  index.unshift({ id, title: title || 'New chat', ts: Date.now() });
+  if (index.length > 40) index.pop();
+  saveChatIndex(index);
+  saveActiveChat();
+  return id;
+}
+
+function updateActiveChatTitle(title) {
+  if (!activeChatId || !title) return;
+  const index = getChatIndex();
+  const entry = index.find(c => c.id === activeChatId);
+  if (entry) { entry.title = title.slice(0, 50); saveChatIndex(index); }
+}
+
+function loadChatSession(id) {
+  try {
+    const raw = localStorage.getItem(CHAT_PRE + id);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    // Clear current UI
+    const msgsEl = document.getElementById('msgs');
+    msgsEl.innerHTML = '';
+    history = data.history || [];
+    activeChatId = id;
+    // Restore rendered messages
+    (data.messages || []).forEach(m => {
+      addMessage(m.type, m.text, m.imageUrl || null);
+    });
+    closeSidebar();
+  } catch(e) { console.error('loadChatSession', e); }
+}
+
+function deleteChatSession(id) {
+  localStorage.removeItem(CHAT_PRE + id);
+  const index = getChatIndex().filter(c => c.id !== id);
+  saveChatIndex(index);
+  renderSidebarRecents();
+}
+
+function renderSidebarRecents() {
+  const el = document.getElementById('sbRecents');
+  if (!el) return;
+  const index = getChatIndex();
+  if (!index.length) { el.innerHTML = '<div style="padding:6px 12px;font-size:.78rem;color:#444;">No chats yet</div>'; return; }
+  el.innerHTML = index.map(c => `
+    <div class="sb-recent-row${c.id === activeChatId ? ' active' : ''}">
+      <button class="sb-recent-item${c.id === activeChatId ? ' active' : ''}" onclick="loadChatSession('${c.id}')">${esc(c.title)}</button>
+      <button class="sb-recent-del" onclick="event.stopPropagation();deleteChatSession('${c.id}')" title="Delete">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function newChat() {
+  saveActiveChat();
+  history = [];
+  activeChatId = null;
+  const msgsEl = document.getElementById('msgs');
+  msgsEl.innerHTML = '';
+  // Re-add welcome screen
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome'; welcome.id = 'welcome';
+  welcome.innerHTML = document.querySelector('template#welcomeTpl')?.innerHTML || '';
+  if (welcome.innerHTML) msgsEl.appendChild(welcome);
+  closeSidebar();
+}
+
 // ── Auth ───────────────────────────────────────────────────────────────────
 const getToken = () => sessionStorage.getItem('bc_token') || localStorage.getItem('bc_token') || null;
 
@@ -1042,6 +1158,7 @@ function init() {
   mem.name = name || 'User';
   // updateTTS called after all functions defined — see bottom of script
   loadMemory();
+  renderSidebarRecents();
 }
 init();
 
@@ -1088,24 +1205,17 @@ function renderMemory() {
   renderSidebarRecents();
 }
 
-// Chat titles tracked for recents
-const chatTitles = [];
+// Chat title tracking — hooks into persistent system
+const chatTitles = []; // kept for compat, not used for display
 function trackChatTitle(text) {
   if (!text || text.length < 4) return;
   const title = text.slice(0, 46) + (text.length > 46 ? '…' : '');
-  if (!chatTitles[0] || chatTitles[0] !== title) {
-    chatTitles.unshift(title);
-    if (chatTitles.length > 10) chatTitles.pop();
+  if (!activeChatId) {
+    startNewChatSession(title);
+  } else {
+    updateActiveChatTitle(title);
   }
   renderSidebarRecents();
-}
-function renderSidebarRecents() {
-  const el = document.getElementById('sbRecents');
-  if (!el) return;
-  if (!chatTitles.length) { el.innerHTML = ''; return; }
-  el.innerHTML = chatTitles.map((t, i) => `
-    <button class="sb-recent-item${i === 0 ? ' active' : ''}" onclick="closeSidebar()">${esc(t)}</button>
-  `).join('');
 }
 function closeSidebar() {
   document.getElementById('sb').classList.remove('open');
@@ -1457,6 +1567,7 @@ async function sendMessage() {
 
     addMessage('in', reply, imageUrl);
     if (ttsOn && reply) speak(reply);
+    saveActiveChat();
     saveLog(text, reply, imageUrl ? 'image' : 'chat');
 
   } catch (e) {
@@ -1513,6 +1624,7 @@ function addMessage(type, text, imageUrl = null, files = []) {
 
   const bbl = document.createElement('div');
   bbl.className = 'bubble';
+  bbl.dataset.raw = text;
   bbl.innerHTML = fmt(text);
 
   if (imageUrl) {
