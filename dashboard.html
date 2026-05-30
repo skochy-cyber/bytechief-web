@@ -1032,8 +1032,8 @@ body::before {
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
 const API_URL      = 'https://api.anthropic.com/v1/messages';
-let MODEL    = 'claude-sonnet-4-20250514';
-let PROVIDER = 'anthropic'; // 'anthropic' | 'groq'
+let MODEL    = localStorage.getItem('bc_model') || 'llama-3.3-70b-versatile';
+let PROVIDER = localStorage.getItem('bc_provider') || 'groq';
 let _blkId = 0;
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -1238,6 +1238,20 @@ function init() {
   // updateTTS called after all functions defined — see bottom of script
   loadMemory();
   renderSidebarRecents();
+  // Sync model badge with saved selection
+  const savedModel = localStorage.getItem('bc_model');
+  if (savedModel) {
+    const savedEl = document.querySelector(`.model-option[data-model="${savedModel}"]`);
+    if (savedEl) {
+      document.querySelectorAll('.model-option').forEach(o => o.classList.remove('active'));
+      savedEl.classList.add('active');
+      const label = savedEl.dataset.label || savedModel;
+      const lbl = document.getElementById('modelLabel');
+      if (lbl) lbl.textContent = label;
+      const pill = document.getElementById('modelPillLabel');
+      if (pill) pill.textContent = label;
+    }
+  }
 }
 init();
 
@@ -1343,6 +1357,8 @@ function selectModel(el) {
 function applyModelSelection(el) {
   MODEL    = el.dataset.model;
   PROVIDER = el.dataset.provider || 'anthropic';
+  localStorage.setItem('bc_model', MODEL);
+  localStorage.setItem('bc_provider', PROVIDER);
   const label = el.dataset.label;
   document.getElementById('modelLabel').textContent = label;
   const pill = document.getElementById('modelPillLabel');
@@ -1656,7 +1672,7 @@ async function sendMessage() {
   } catch (e) {
     typingEl?.remove();
     const errMsg = e.message || 'Something went wrong. Please try again.';
-    addMessage('in', '⚠️ ' + errMsg);
+    addMessage('in', errMsg);
     console.error('ByteChief error:', e);
   } finally {
     busy = false;
