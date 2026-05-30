@@ -454,13 +454,13 @@ body::before {
 .cap-card-title { font-size:.74rem; font-weight:600; color:var(--ink); margin-bottom:2px; }
 .cap-card-desc { font-size:.67rem; color:var(--ink3); line-height:1.45; }
 
-/* INPUT BAR */
+/* INPUT BAR — Claude-app style */
 .ibar {
   flex:0 0 auto;
-  background:rgba(249,248,246,.95);
+  background:rgba(249,248,246,.97);
   backdrop-filter:blur(20px);
   border-top:1px solid var(--border);
-  padding:10px 12px;
+  padding:8px 12px;
   padding-bottom:max(10px,env(safe-area-inset-bottom,10px));
 }
 .file-strip { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
@@ -474,56 +474,96 @@ body::before {
 .file-chip .rm-file:hover { color:var(--accent); }
 .file-chip .rm-file svg { width:10px; height:10px; }
 
-.input-row { display:flex; align-items:flex-end; gap:8px; }
+/* Textarea bubble */
 .input-wrap {
-  flex:1; background:var(--white); border:1px solid var(--border);
-  border-radius:14px; display:flex; align-items:flex-end;
-  padding:10px 12px; gap:8px; min-height:48px;
+  background:var(--white); border:1px solid var(--border);
+  border-radius:18px;
+  padding:10px 14px;
   transition:border-color .18s, box-shadow .18s;
   box-shadow:var(--shadow-sm);
+  margin-bottom:8px;
 }
-.input-wrap:focus-within { border-color:rgba(200,75,9,.4); box-shadow:0 0 0 3px rgba(200,75,9,.06); }
+.input-wrap:focus-within { border-color:rgba(200,75,9,.35); box-shadow:0 0 0 3px rgba(200,75,9,.06); }
 .inp-ta {
-  flex:1; background:none; color:var(--ink);
+  display:block; width:100%; background:none; color:var(--ink);
   border:none; resize:none; outline:none;
-  font-family:var(--font); font-size:.875rem; line-height:1.5;
-  min-height:24px; max-height:120px;
+  font-family:var(--font); font-size:.9rem; line-height:1.5;
+  min-height:24px; max-height:130px;
 }
 .inp-ta::placeholder { color:var(--ink4); }
-.input-actions { display:flex; gap:5px; align-items:center; flex-shrink:0; }
-.inp-btn {
-  background:none; border:none; color:var(--ink4); cursor:pointer;
-  display:flex; align-items:center; border-radius:6px; padding:2px;
-  transition:color .15s;
-}
-.inp-btn:hover { color:var(--accent); }
-.inp-btn.rec { color:var(--accent); animation:recPulse 1s ease infinite; }
-@keyframes recPulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
-.inp-btn svg { width:17px; height:17px; }
 
-.send-btn {
-  flex:0 0 44px; height:44px;
-  background:var(--accent); border:none; border-radius:12px;
-  color:#fff; cursor:pointer;
+/* Bottom toolbar row */
+.input-row {
+  display:flex; align-items:center; gap:8px;
+}
+.input-left { display:flex; align-items:center; gap:7px; flex:1; min-width:0; }
+.input-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+
+/* + (attach) pill button */
+.add-btn {
+  width:36px; height:36px; border-radius:50%;
+  background:#1a1a1a; border:none; color:#fff;
   display:flex; align-items:center; justify-content:center;
-  transition:all .18s; box-shadow:0 3px 12px rgba(200,75,9,.3);
+  cursor:pointer; flex-shrink:0;
+  transition:background .15s, transform .12s;
 }
-.send-btn:hover { background:var(--accent2); transform:translateY(-1px); box-shadow:0 5px 18px rgba(200,75,9,.35); }
-.send-btn:active { transform:scale(.94); }
-.send-btn:disabled { opacity:.35; cursor:not-allowed; transform:none; box-shadow:none; }
-.send-btn svg { width:17px; height:17px; }
+.add-btn:hover { background:#333; }
+.add-btn:active { transform:scale(.93); }
+.add-btn svg { width:16px; height:16px; }
 
-.input-meta { display:flex; align-items:center; justify-content:space-between; margin-top:6px; }
-.search-toggle {
+/* Model pill */
+.model-pill {
   display:flex; align-items:center; gap:5px;
-  background:none; border:1px solid var(--border); border-radius:7px;
-  padding:3px 9px; color:var(--ink3); font-size:.67rem;
-  cursor:pointer; font-family:var(--font); transition:all .15s;
+  background:#1a1a1a; border:none; border-radius:20px;
+  padding:0 13px; height:36px;
+  color:#fff; font-size:.78rem; font-weight:500;
+  cursor:pointer; white-space:nowrap; flex-shrink:0;
+  font-family:var(--font);
+  transition:background .15s;
 }
-.search-toggle:hover { border-color:var(--border2); color:var(--ink2); }
-.search-toggle.on { border-color:var(--accent-border); color:var(--accent); background:var(--accent-bg); }
-.search-toggle svg { width:11px; height:11px; }
-.input-hint { font-size:.63rem; color:var(--ink4); }
+.model-pill:hover { background:#333; }
+.model-pill svg { width:13px; height:13px; opacity:.7; }
+
+/* Mic button */
+.mic-btn {
+  width:36px; height:36px; border-radius:50%;
+  background:#1a1a1a; border:none; color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; flex-shrink:0;
+  transition:background .15s, transform .12s;
+}
+.mic-btn:hover { background:#333; }
+.mic-btn:active { transform:scale(.93); }
+.mic-btn.rec { background:var(--accent); animation:recPulse 1s ease infinite; }
+.mic-btn svg { width:16px; height:16px; }
+
+/* Send / voice-wave button */
+.send-btn {
+  width:40px; height:40px;
+  background:#f5f5f5; border:none; border-radius:50%;
+  color:#1a1a1a; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .18s;
+  flex-shrink:0;
+}
+.send-btn:hover { background:#e5e5e5; transform:scale(1.05); }
+.send-btn:active { transform:scale(.93); }
+.send-btn:disabled { opacity:.35; cursor:not-allowed; transform:none; }
+.send-btn svg { width:18px; height:18px; }
+/* When has content — accent filled */
+.send-btn.ready {
+  background:var(--accent);
+  color:#fff;
+  box-shadow:0 3px 12px rgba(200,75,9,.28);
+}
+.send-btn.ready:hover { background:var(--accent2); transform:scale(1.05); }
+
+@keyframes recPulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+/* Hide old model switcher on mobile — we now have model-pill */
+@media(max-width:500px) {
+  .model-switcher { display:none; }
+}
 
 /* TOAST */
 .toast-wrap { position:fixed; top:66px; right:12px; z-index:999; display:flex; flex-direction:column; gap:5px; }
@@ -767,33 +807,48 @@ body::before {
       </div>
     </div>
 
-    <!-- INPUT BAR -->
+    <!-- INPUT BAR — Claude-app style -->
     <div class="ibar">
       <div class="file-strip" id="fileStrip" style="display:none;"></div>
-      <div class="input-row">
-        <div class="input-wrap">
-          <textarea class="inp-ta" id="ta" placeholder="Ask anything... (Shift+Enter for new line)" rows="1"
-            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-          <div class="input-actions">
-            <label class="inp-btn" title="Attach file">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-              <input type="file" id="fileInput" style="display:none;" multiple accept="image/*,.pdf,.txt,.csv,.json,.md,.py,.js,.ts,.html,.css" onchange="handleFiles(this.files)">
-            </label>
-            <button class="inp-btn" id="micBtn" onclick="toggleVoice()" title="Voice input">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-            </button>
-          </div>
-        </div>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
+      <!-- Textarea bubble -->
+      <div class="input-wrap">
+        <textarea class="inp-ta" id="ta" placeholder="Reply to Claude…" rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this);updateSendBtn();"></textarea>
+        <input type="file" id="fileInput" style="display:none;" multiple accept="image/*,.pdf,.txt,.csv,.json,.md,.py,.js,.ts,.html,.css" onchange="handleFiles(this.files)">
       </div>
-      <div class="input-meta">
-        <button class="search-toggle" id="searchToggle" onclick="toggleWebSearch()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Web Search
-        </button>
-        <span class="input-hint">Enter to send · Shift+Enter for new line</span>
+      <!-- Bottom toolbar -->
+      <div class="input-row">
+        <div class="input-left">
+          <!-- + attach button -->
+          <button class="add-btn" title="Attach file / options" onclick="document.getElementById('fileInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <!-- Model pill -->
+          <button class="model-pill" id="modelPill" onclick="toggleModelMenu()">
+            <span id="modelPillLabel">Sonnet 4.6</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="input-right">
+          <!-- Mic button -->
+          <button class="mic-btn" id="micBtn" onclick="toggleVoice()" title="Voice input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </button>
+          <!-- Send / waveform button -->
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+            <!-- Waveform bars (idle) -->
+            <svg id="sendIconWave" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="2"  y="8"  width="3" height="8"  rx="1.5"/>
+              <rect x="7"  y="5"  width="3" height="14" rx="1.5"/>
+              <rect x="12" y="3"  width="3" height="18" rx="1.5"/>
+              <rect x="17" y="5"  width="3" height="14" rx="1.5"/>
+            </svg>
+            <!-- Arrow (ready) — hidden until user types -->
+            <svg id="sendIconArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </main>
@@ -940,6 +995,8 @@ function applyModelSelection(el) {
   PROVIDER = el.dataset.provider || 'anthropic';
   const label = el.dataset.label;
   document.getElementById('modelLabel').textContent = label;
+  const pill = document.getElementById('modelPillLabel');
+  if (pill) pill.textContent = label;
   document.querySelectorAll('.model-option').forEach(o => o.classList.remove('active'));
   el.classList.add('active');
   closeModelMenu();
@@ -993,12 +1050,14 @@ function closeSB() {
 // ── Web search ─────────────────────────────────────────────────────────────
 function toggleWebSearch() {
   webSearch = !webSearch;
-  document.getElementById('searchToggle').classList.toggle('on', webSearch);
+  const st = document.getElementById('searchToggle');
+  if (st) st.classList.toggle('on', webSearch);
   toast(webSearch ? 'Web search on' : 'Web search off', webSearch ? 'inf' : '');
 }
 function enableSearch() {
   webSearch = true;
-  document.getElementById('searchToggle').classList.add('on');
+  const st = document.getElementById('searchToggle');
+  if (st) st.classList.add('on');
   toast('Web search enabled', 'inf');
   qc('Search the web for: latest AI developments 2025');
 }
@@ -1111,7 +1170,7 @@ async function sendMessage() {
   const displayText = text || '(file attached)';
   const filesSnap = [...pendingFiles];
   addMessage('out', displayText, null, filesSnap);
-  ta.value = ''; autoResize(ta);
+  ta.value = ''; autoResize(ta); updateSendBtn();
 
   busy = true;
   document.getElementById('sendBtn').disabled = true;
@@ -1395,6 +1454,19 @@ function toggleVoice() {
 function qc(t) { const ta = document.getElementById('ta'); ta.value = t; ta.focus(); autoResize(ta); closeSB(); }
 function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+function updateSendBtn() {
+  const ta = document.getElementById('ta');
+  const btn = document.getElementById('sendBtn');
+  const wave = document.getElementById('sendIconWave');
+  const arrow = document.getElementById('sendIconArrow');
+  const hasText = ta && ta.value.trim().length > 0;
+  if (btn) {
+    btn.disabled = !hasText;
+    btn.classList.toggle('ready', hasText);
+  }
+  if (wave) wave.style.display = hasText ? 'none' : '';
+  if (arrow) arrow.style.display = hasText ? '' : 'none';
+}
 function toast(msg, type = '') {
   const t = document.createElement('div');
   t.className = 'toast' + (type ? ' ' + type : '');
