@@ -181,7 +181,7 @@ body::before{content:'';position:fixed;inset:0;opacity:.025;background-image:url
 .caps-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-width:400px;width:100%;}
 .cap-card{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:12px;text-align:left;cursor:pointer;transition:all .2s;}
 .cap-card:hover{border-color:var(--ac);background:rgba(124,58,237,.08);transform:translateY(-2px);}
-.cap-card-icon{font-size:1.1rem;margin-bottom:5px;}
+.cap-card-icon{margin-bottom:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--ac2);}
 .cap-card-title{font-size:.75rem;font-weight:600;color:var(--tx);margin-bottom:2px;}
 .cap-card-desc{font-size:.68rem;color:var(--mu2);line-height:1.4;}
 
@@ -356,22 +356,22 @@ body::before{content:'';position:fixed;inset:0;opacity:.025;background-image:url
         <p class="welcome-sub">The most powerful AI assistant — ask anything, generate images, write code, analyze files, search the web, and more.</p>
         <div class="caps-grid">
           <div class="cap-card" onclick="qc('Explain quantum computing in simple terms')">
-            <div class="cap-card-icon">🧠</div>
+            <div class="cap-card-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9.5 2a2.5 2.5 0 0 1 5 0c1.93.27 3.5 2 3.5 4.5s-1.17 4.5-3 5.5V15a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2v-3C7.17 11 6 9.07 6 6.5S7.57 2.27 9.5 2z"/><path d="M12 15v7"/></svg></div>
             <div class="cap-card-title">Deep Reasoning</div>
             <div class="cap-card-desc">Complex analysis & multi-step thinking</div>
           </div>
           <div class="cap-card" onclick="qc('Write a Python web scraper for ')">
-            <div class="cap-card-icon">⚡</div>
+            <div class="cap-card-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
             <div class="cap-card-title">Code Generation</div>
             <div class="cap-card-desc">Any language, production-ready code</div>
           </div>
           <div class="cap-card" onclick="qc('Generate image of futuristic Lagos city at night with neon lights')">
-            <div class="cap-card-icon">🎨</div>
+            <div class="cap-card-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></div>
             <div class="cap-card-title">Image Generation</div>
             <div class="cap-card-desc">Create stunning visuals with AI</div>
           </div>
           <div class="cap-card" onclick="enableSearch()">
-            <div class="cap-card-icon">🌐</div>
+            <div class="cap-card-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
             <div class="cap-card-title">Web Search</div>
             <div class="cap-card-desc">Real-time information & research</div>
           </div>
@@ -513,12 +513,12 @@ function toggleWebSearch() {
   webSearch = !webSearch;
   const btn = document.getElementById('searchToggle');
   btn.classList.toggle('on', webSearch);
-  toast(webSearch ? '🌐 Web search ON' : 'Web search off', webSearch ? 'inf' : '');
+  toast(webSearch ? 'Web search ON' : 'Web search off', webSearch ? 'inf' : '');
 }
 function enableSearch() {
   webSearch = true;
   document.getElementById('searchToggle').classList.add('on');
-  toast('🌐 Web search enabled', 'inf');
+  toast('Web search enabled', 'inf');
   qc('Search the web for: latest AI developments 2025');
 }
 
@@ -705,7 +705,7 @@ async function sendMessage() {
       const prompt = encodeURIComponent(imgMatch[1].trim());
       imageUrl = `https://image.pollinations.ai/prompt/${prompt}?width=768&height=512&nologo=true&enhance=true`;
       reply = reply.replace(/\[IMAGE:\s*.+?\]/i, '').trim();
-      if (!reply) reply = "Here's your generated image! 🎨";
+      if (!reply) reply = "Here's your generated image.";
     }
 
     history.push({ role: 'user', content: text });
@@ -720,7 +720,7 @@ async function sendMessage() {
 
   } catch (e) {
     typingEl.remove();
-    addMessage('in', `⚠️ ${e.message || 'Something went wrong. Please try again.'}`);
+    addMessage('in', `${e.message || 'Something went wrong. Please try again.'}`);
   }
 
   busy = false;
@@ -760,7 +760,7 @@ YOUR PERSONALITY:
 - Adaptive: casual and funny in banter, precise and thorough in technical work
 - Direct: no fluff, no unnecessary disclaimers
 - Nigerian flavor when appropriate — Pidgin, local references, cultural awareness
-- For finance/crypto: always end with ⚠️ DYOR
+- For finance/crypto: always end with a DYOR disclaimer
 
 FORMATTING:
 - Use markdown: **bold**, *italic*, \`code\`, code blocks with language tags
