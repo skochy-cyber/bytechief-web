@@ -136,6 +136,11 @@ nav{position:relative;z-index:500;height:64px;display:flex;align-items:center;pa
 .fi{width:100%;padding:.78rem 1rem;background:var(--off);border:1.5px solid var(--border);border-radius:11px;color:var(--ink);font-family:'Geist',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;}
 .fi:focus{border-color:var(--ink2);background:var(--white);box-shadow:0 0 0 3px rgba(15,14,11,.06);}
 .fi::placeholder{color:var(--ink4);}
+.pw-wrap{position:relative;}
+.pw-wrap .fi{padding-right:2.6rem;}
+.pw-toggle{position:absolute;right:0;top:0;bottom:0;width:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:var(--ink4);transition:color .18s;}
+.pw-toggle:hover{color:var(--ink);}
+.pw-toggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
 .btn-submit{width:100%;padding:.9rem 1.5rem;background:var(--ink);color:#fff;border:none;border-radius:12px;font-family:'Geist',sans-serif;font-size:.93rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;position:relative;overflow:hidden;transition:background .3s,transform .25s,box-shadow .3s;box-shadow:0 4px 20px rgba(15,14,11,.15);}
 .btn-submit::after{content:'';position:absolute;inset:0;background:var(--accent);transform:translateX(-102%);transition:transform .38s cubic-bezier(.4,0,.2,1);border-radius:12px;}
 .btn-submit:hover::after{transform:translateX(0);}
@@ -152,11 +157,12 @@ nav{position:relative;z-index:500;height:64px;display:flex;align-items:center;pa
 .card-foot a:hover{border-color:var(--ink);}
 
 /* ─── FOOTER ─────────────────────────────────────── */
-footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22px 6%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--off);}
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:18px 6%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;background:var(--off);}
 .f-copy{font-size:.73rem;color:var(--ink4);}
-.f-nav{display:flex;gap:20px;}
-.f-nav a{font-size:.73rem;color:var(--ink4);text-decoration:none;transition:color .18s;}
-.f-nav a:hover{color:var(--ink);}
+.f-nav{display:flex;gap:6px;flex-wrap:wrap;}
+.f-nav a{font-size:.73rem;font-weight:500;color:var(--ink3);text-decoration:none;padding:.3rem .85rem;border-radius:100px;border:1px solid var(--border2);background:transparent;transition:color .18s,background .18s,border-color .18s,box-shadow .18s;}
+.f-nav a:hover{color:var(--ink);background:var(--off2);border-color:var(--border2);box-shadow:0 2px 8px rgba(15,14,11,.06);}
+@media(max-width:520px){footer{flex-direction:column;align-items:center;text-align:center;padding:18px 5%;}.f-nav{justify-content:center;}}
 
 @keyframes slideUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
 @media(max-width:480px){*{cursor:auto!important;}.cursor{display:none!important;}.main{padding:32px 4% 64px;}.card-head{padding:28px 24px 0;}.secure-notice{margin:18px 24px 0;}.form-body{padding:22px 24px 30px;}.card-foot{padding:16px 24px 24px;}}
@@ -264,7 +270,13 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:22
         </div>
         <div class="fg">
           <label class="fg-label" for="password">Password</label>
-          <input type="password" id="password" class="fi" placeholder="Admin password" required autocomplete="current-password">
+          <div class="pw-wrap">
+            <input type="password" id="password" class="fi" placeholder="Admin password" required autocomplete="current-password">
+            <button type="button" class="pw-toggle" id="pwToggle" onclick="togglePw('password','pwToggle')" tabindex="-1">
+              <svg id="pwToggle-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg id="pwToggle-eyeoff" viewBox="0 0 24 24" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
         </div>
 
         <button type="button" class="btn-submit" id="submitBtn" onclick="doLogin()">
@@ -312,6 +324,14 @@ document.querySelectorAll('a,button,.info-item').forEach(el=>{
   el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
   el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
 });
+
+function togglePw(inputId, btnId){
+  const inp=document.getElementById(inputId);
+  const show=inp.type==='password';
+  inp.type=show?'text':'password';
+  document.getElementById(btnId+'-eye').style.display=show?'none':'block';
+  document.getElementById(btnId+'-eyeoff').style.display=show?'block':'none';
+}
 
 document.addEventListener('keydown',e=>{if(e.key==='Enter') doLogin();});
 
