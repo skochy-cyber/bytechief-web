@@ -105,7 +105,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '..')));
 
 const apiLimiter = rateLimit({ windowMs: 15*60*1000, max: 500, message: { error: 'Too many requests' } });
-const chatLimit  = rateLimit({ windowMs:  1*60*1000, max:  60, keyGenerator: (req) => req.user?.id || req.ip, message: { error: 'Slow down — too many messages' } });
+const chatLimit  = rateLimit({ windowMs:  1*60*1000, max:  30, message: { error: 'Slow down — too many messages' } });
 app.use('/api/', apiLimiter);
 
 const authMw = (req, res, next) => {
@@ -116,10 +116,6 @@ const authMw = (req, res, next) => {
 };
 const adminMw = (req, res, next) =>
   req.user?.role === 'admin' ? next() : res.status(403).json({ error: 'Admin only' });
-
-function displayName(name, email) {
-  return (name && name.trim()) ? name.trim() : (email ? email.split('@')[0] : 'User');
-}
 
 function makeToken(user) {
   return jwt.sign(
@@ -151,7 +147,7 @@ app.post('/api/register', async (req, res) => {
         isInvited: true, inviteCode: inviteCode.toUpperCase(),
       });
       invite.used = true; invite.usedBy = email; await invite.save();
-      return res.json({ token: makeToken(user), user: { email: user.email, name: displayName(user.name, user.email), role: user.role } });
+      return res.json({ token: makeToken(user), user: { email: user.email, name: user.name, role: user.role } });
     } else {
       const inv = memInvites.find(i => i.code === inviteCode.toUpperCase() && !i.used);
       if (!inv) return res.status(403).json({ error: 'Invalid or already used invite code' });
@@ -159,7 +155,7 @@ app.post('/api/register', async (req, res) => {
         return res.status(409).json({ error: 'Email already registered' });
       const user = { id: memIdSeq++, email: email.toLowerCase(), name: name||'', password: await bcrypt.hash(password,10), role:'user', memory:{contacts:{},preferences:{},facts:[]}, totalMessages:0 };
       memUsers.push(user); inv.used=true;
-      return res.json({ token: makeToken(user), user: { email:user.email, name:displayName(user.name, user.email), role:user.role } });
+      return res.json({ token: makeToken(user), user: { email:user.email, name:user.name, role:user.role } });
     }
   } catch (e) { res.status(500).json({ error: 'Registration failed' }); }
 });
@@ -178,24 +174,8 @@ app.post('/api/login', async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
     if (MONGO_URI) await User.findByIdAndUpdate(user._id, { lastActive: new Date() });
-    res.json({ token: makeToken(user), user: { email: user.email, name: displayName(user.name, user.email), role: user.role } });
+    res.json({ token: makeToken(user), user: { email: user.email, name: user.name, role: user.role } });
   } catch (e) { res.status(500).json({ error: 'Login failed' }); }
-});
-
-// ── /api/me — validate token and return current user ────────────────────────
-app.get('/api/me', authMw, async (req, res) => {
-  try {
-    let name = req.user.name || '';
-    let email = req.user.email || '';
-    if (MONGO_URI && req.user.id) {
-      const u = await User.findById(req.user.id).select('name email').lean();
-      if (u) { name = u.name || ''; email = u.email || ''; }
-    }
-    res.json({ id: req.user.id, email, name: displayName(name, email), role: req.user.role });
-  } catch {
-    const email = req.user.email || '';
-    res.json({ id: req.user.id, email, name: displayName(req.user.name, email), role: req.user.role });
-  }
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -205,12 +185,12 @@ app.get('/api/me', authMw, async (req, res) => {
 app.get('/api/memory', authMw, async (req, res) => {
   try {
     if (MONGO_URI) {
-      const u = await User.findById(req.user.id).select('name email memory');
+      const u = await User.findById(req.user.id).select('name memory');
       if (!u) return res.status(404).json({ error: 'User not found' });
-      return res.json({ name: displayName(u.name, u.email), email: u.email, memory: u.memory });
+      return res.json({ name: u.name, memory: u.memory });
     }
     const u = memUsers.find(u => u.id == req.user.id);
-    res.json({ name: displayName(u?.name, u?.email||req.user.email), email: u?.email||req.user.email||'', memory: u?.memory||{} });
+    res.json({ name: u?.name||'', memory: u?.memory||{} });
   } catch (e) { res.status(500).json({ error: 'Failed to fetch memory' }); }
 });
 
@@ -265,46 +245,6 @@ app.post('/api/chat', authMw, chatLimit, async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// GROQ PROXY ROUTE (server-side key — users never see it)
-// ══════════════════════════════════════════════════════════════════════════════
-
-app.post('/api/groq', authMw, chatLimit, async (req, res) => {
-  const GROQ_KEY = process.env.GROQ_API_KEY;
-  if (!GROQ_KEY) return res.status(503).json({ error: 'Groq not configured on this server' });
-
-  const { model, messages, max_tokens, temperature, stream } = req.body;
-  if (!model || !messages) return res.status(400).json({ error: 'model and messages required' });
-
-  try {
-    const groqAbort = new AbortController();
-    const groqTimeout = setTimeout(() => groqAbort.abort(), 28000);
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      signal: groqAbort.signal,
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${GROQ_KEY}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        max_tokens:  max_tokens  || 800,
-        temperature: temperature || 0.7,
-        stream:      stream      || false,
-      }),
-    });
-
-    clearTimeout(groqTimeout);
-    const data = await groqRes.json();
-    if (!groqRes.ok) return res.status(groqRes.status).json({ error: data?.error?.message || 'Groq error' });
-    res.json(data);
-  } catch (e) {
-    const msg = e.name === 'AbortError' ? 'Groq request timed out' : ('Groq proxy failed: ' + e.message);
-    res.status(500).json({ error: msg });
-  }
-});
-
-// ══════════════════════════════════════════════════════════════════════════════
 // IMAGE ROUTE (Pollinations proxy)
 // ══════════════════════════════════════════════════════════════════════════════
 
@@ -338,9 +278,9 @@ app.get('/api/admin/stats', authMw, adminMw, async (req, res) => {
       const recentLogs = await ChatLog.find().sort({ createdAt: -1 }).limit(20).lean();
       const topUsers = await User.find().sort({ totalMessages: -1 }).limit(10)
         .select('email name totalMessages lastActive').lean();
-      res.json({ totalUsers: users, totalLogs: logs, totalInvites: invites, recentLogs, topUsers, model: 'claude-sonnet-4-20250514' });
+      res.json({ users, logs, invites, recentLogs, topUsers, model: 'claude-sonnet-4-20250514' });
     } else {
-      res.json({ totalUsers: memUsers.length, totalLogs: memLogs.length, totalInvites: memInvites.filter(i=>!i.used).length,
+      res.json({ users: memUsers.length, logs: memLogs.length, invites: memInvites.filter(i=>!i.used).length,
         recentLogs: memLogs.slice(-20).reverse(), topUsers: [], model: 'claude-sonnet-4-20250514' });
     }
   } catch (e) { res.status(500).json({ error: 'Stats failed' }); }
@@ -351,7 +291,7 @@ app.get('/api/admin/users', authMw, adminMw, async (req, res) => {
     const users = MONGO_URI
       ? await User.find().select('-password').sort({ createdAt: -1 }).lean()
       : memUsers.map(({ password, ...u }) => u);
-    res.json({ users });
+    res.json(users);
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -365,20 +305,18 @@ app.delete('/api/admin/users/:id', authMw, adminMw, async (req, res) => {
 
 app.post('/api/admin/invites', authMw, adminMw, async (req, res) => {
   const { email, count = 1 } = req.body;
-  const invites = [];
+  const codes = [];
   try {
     for (let i = 0; i < Math.min(count, 20); i++) {
       const code = Math.random().toString(36).slice(2,8).toUpperCase();
       if (MONGO_URI) {
-        const inv = await Invite.create({ code, email: email || '', createdBy: req.user.email || 'admin' });
-        invites.push(inv);
+        await Invite.create({ code, email: email || '', createdBy: req.user.email || 'admin' });
       } else {
-        const inv = { code, email: email||'', used:false, id:memIdSeq++ };
-        memInvites.push(inv);
-        invites.push(inv);
+        memInvites.push({ code, email: email||'', used:false, id:memIdSeq++ });
       }
+      codes.push(code);
     }
-    res.json({ invites });
+    res.json({ codes });
   } catch (e) { res.status(500).json({ error: 'Invite creation failed' }); }
 });
 
@@ -387,7 +325,7 @@ app.get('/api/admin/invites', authMw, adminMw, async (req, res) => {
     const invites = MONGO_URI
       ? await Invite.find().sort({ createdAt: -1 }).limit(100).lean()
       : memInvites.slice(-100).reverse();
-    res.json({ invites });
+    res.json(invites);
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
@@ -396,7 +334,7 @@ app.get('/api/admin/logs', authMw, adminMw, async (req, res) => {
     const logs = MONGO_URI
       ? await ChatLog.find().sort({ createdAt: -1 }).limit(100).lean()
       : memLogs.slice(-100).reverse();
-    res.json({ logs });
+    res.json(logs);
   } catch (e) { res.status(500).json({ error: 'Failed' }); }
 });
 
