@@ -1317,10 +1317,9 @@ function trackChatTitle(text) {
   const title = text.slice(0, 46) + (text.length > 46 ? '…' : '');
   if (!activeChatId) {
     startNewChatSession(title);
-  } else {
-    updateActiveChatTitle(title);
+    renderSidebarRecents();
   }
-  renderSidebarRecents();
+  // Title is set once on first message and never changed again
 }
 function closeSidebar() {
   document.getElementById('sb').classList.remove('open');
