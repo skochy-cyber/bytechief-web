@@ -806,6 +806,9 @@ body::before {
     <button class="icon-btn" id="ttsBtn" onclick="toggleTTS()" title="Text to Speech">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
     </button>
+    <button class="icon-btn" onclick="document.getElementById('apiKeyModal').classList.add('open')" title="Set Anthropic API Key">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+    </button>
     <div class="avatar-pill" onclick="logout()">
       <div class="av-circle" id="uav">B</div>
       <span class="av-name" id="uname">User</span>
@@ -1631,7 +1634,7 @@ async function sendMessage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': '',
+          'x-api-key': localStorage.getItem('bc_anthropic_key') || '',
           'anthropic-version': '2023-06-01',
           'anthropic-dangerous-direct-browser-access': 'true'
         },
@@ -2057,41 +2060,50 @@ function toast(msg, type = '') {
         <span class="model-opt-tag fast">Fast</span>
       </div>
 
-      <!-- Groq section -->
-      <div class="model-dropdown-divider"><span>Groq — Free &amp; Fast</span></div>
-
-      <div class="model-option" data-model="llama-3.3-70b-versatile" data-label="Llama 3.3 70B" data-provider="groq" onclick="selectModel(this)">
-        <div class="model-opt-icon groq">Li</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Llama 3.3 70B</div>
-          <div class="model-opt-desc">Meta's best open model, very capable</div>
-        </div>
-        <span class="model-opt-tag free">Free</span>
-      </div>
-      <div class="model-option" data-model="llama-3.1-8b-instant" data-label="Llama 3.1 8B" data-provider="groq" onclick="selectModel(this)">
-        <div class="model-opt-icon groq">Li</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Llama 3.1 8B</div>
-          <div class="model-opt-desc">Ultra-fast, great for simple tasks</div>
-        </div>
-        <span class="model-opt-tag fast">Fast</span>
-      </div>
-      <div class="model-option" data-model="mixtral-8x7b-32768" data-label="Mixtral 8x7B" data-provider="groq" onclick="selectModel(this)">
-        <div class="model-opt-icon groq">Mx</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Mixtral 8x7B</div>
-          <div class="model-opt-desc">Mistral's MoE model, long context</div>
-        </div>
-        <span class="model-opt-tag free">Free</span>
-      </div>
-      <div class="model-option" data-model="gemma2-9b-it" data-label="Gemma 2 9B" data-provider="groq" onclick="selectModel(this)">
-        <div class="model-opt-icon groq">Gm</div>
-        <div class="model-opt-body">
-          <div class="model-opt-name">Gemma 2 9B</div>
-          <div class="model-opt-desc">Google's efficient open model</div>
-        </div>
-        <span class="model-opt-tag free">Free</span>
-      </div>
+      <!-- Groq section removed: no /api/groq backend route exists -->
     </div>
+<!-- Anthropic API Key Modal -->
+<div class="key-modal-backdrop" id="apiKeyModal">
+  <div class="key-modal">
+    <div class="key-modal-title">🔑 Anthropic API Key Required</div>
+    <div class="key-modal-sub">
+      ByteChief calls the Anthropic API directly from your browser. Your key is stored only in your browser's local storage and never sent to the ByteChief server.<br><br>
+      Get a key at <a href="https://console.anthropic.com/keys" target="_blank">console.anthropic.com/keys</a>.
+    </div>
+    <input class="key-modal-input" type="password" id="apiKeyInput" placeholder="sk-ant-…" autocomplete="off" />
+    <div class="key-modal-actions">
+      <button class="key-modal-btn secondary" onclick="closeApiKeyModal()">Cancel</button>
+      <button class="key-modal-btn" onclick="saveApiKey()">Save &amp; Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // Show the modal if no key is stored yet
+  if (!localStorage.getItem('bc_anthropic_key')) {
+    document.getElementById('apiKeyModal').classList.add('open');
+  }
+
+  // Allow Enter key in key input
+  document.getElementById('apiKeyInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') saveApiKey();
+  });
+})();
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    alert('Please enter a valid Anthropic API key (starts with sk-ant-)');
+    return;
+  }
+  localStorage.setItem('bc_anthropic_key', val);
+  closeApiKeyModal();
+}
+
+function closeApiKeyModal() {
+  document.getElementById('apiKeyModal').classList.remove('open');
+}
+</script>
 </body>
 </html>
