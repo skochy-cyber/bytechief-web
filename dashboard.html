@@ -1032,8 +1032,12 @@ body::before {
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
 const API_URL      = 'https://api.anthropic.com/v1/messages';
-let MODEL    = localStorage.getItem('bc_model') || 'llama-3.3-70b-versatile';
-let PROVIDER = localStorage.getItem('bc_provider') || 'groq';
+// Migrate stale Groq defaults — backend /api/groq route no longer exists
+const GROQ_MODELS = ['llama-3.3-70b-versatile','llama-3.1-8b-instant','mixtral-8x7b-32768','gemma2-9b-it'];
+if (GROQ_MODELS.includes(localStorage.getItem('bc_model'))) localStorage.removeItem('bc_model');
+if (localStorage.getItem('bc_provider') === 'groq') localStorage.removeItem('bc_provider');
+let MODEL    = localStorage.getItem('bc_model') || 'claude-sonnet-4-20250514';
+let PROVIDER = localStorage.getItem('bc_provider') || 'anthropic';
 let _blkId = 0;
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -1243,13 +1247,8 @@ function init() {
   if (savedModel) {
     const savedEl = document.querySelector(`.model-option[data-model="${savedModel}"]`);
     if (savedEl) {
-      document.querySelectorAll('.model-option').forEach(o => o.classList.remove('active'));
-      savedEl.classList.add('active');
-      const label = savedEl.dataset.label || savedModel;
-      const lbl = document.getElementById('modelLabel');
-      if (lbl) lbl.textContent = label;
-      const pill = document.getElementById('modelPillLabel');
-      if (pill) pill.textContent = label;
+      // Use applyModelSelection so PROVIDER is also synced from data-provider
+      applyModelSelection(savedEl);
     }
   }
 }
