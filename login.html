@@ -1031,6 +1031,9 @@ body::before {
 
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
+function he(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;'); }
+const esc = he;
+
 const API_URL      = 'https://api.anthropic.com/v1/messages';
 let MODEL    = localStorage.getItem('bc_model') || 'llama-3.3-70b-versatile';
 // Migrate stale groq default to anthropic (groq backend route removed)
@@ -1085,6 +1088,7 @@ function saveChatIndex(index) {
 
 function saveActiveChat() {
   if (!activeChatId) return;
+  localStorage.setItem('bc_active_id_' + getUserKey(), activeChatId);
   // Collect rendered messages
   const msgs = [];
   document.querySelectorAll('#msgs .msg-row').forEach(row => {
@@ -1167,6 +1171,7 @@ function newChat() {
   saveActiveChat();
   history = [];
   activeChatId = null;
+  localStorage.removeItem('bc_active_id_' + getUserKey());
   busy = false;
   const btn = document.getElementById('sendBtn');
   if (btn) { btn.disabled = false; }
@@ -1239,6 +1244,14 @@ function init() {
   mem.name = name || 'User';
   // updateTTS called after all functions defined — see bottom of script
   loadMemory();
+  // Restore last active chat before rendering sidebar
+  const lastId = localStorage.getItem('bc_active_id_' + getUserKey());
+  if (lastId) {
+    const index = getChatIndex();
+    if (index.find(c => c.id === lastId)) {
+      loadChatSession(lastId);
+    }
+  }
   renderSidebarRecents();
   // Sync model badge with saved selection
   const savedModel = localStorage.getItem('bc_model');
@@ -1976,8 +1989,6 @@ function fmt(raw) {
 
   return s;
 }
-function he(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-const esc = he;
 function copyText(t) { navigator.clipboard?.writeText(t).then(() => toast('Copied', 'ok')).catch(() => toast('Copy failed', 'err')); }
 
 // ── TTS ────────────────────────────────────────────────────────────────────
