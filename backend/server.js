@@ -21,7 +21,8 @@ const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'ByteChief2026@@';
 const ADMIN_EMAIL_ENV = process.env.ADMIN_EMAIL || 'admin@bytechief.ai';
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
-const GROQ_API_KEY  = process.env.GROQ_API_KEY || '';
+const GROQ_API_KEY      = process.env.GROQ_API_KEY      || '';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
 
 app.set('trust proxy', 1);
 
@@ -243,6 +244,35 @@ app.post('/api/chat', authMw, chatLimit, async (req, res) => {
     }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: 'Log failed' }); }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ANTHROPIC PROXY ROUTE
+// ══════════════════════════════════════════════════════════════════════════════
+
+app.post('/api/anthropic', authMw, chatLimit, async (req, res) => {
+  if (!ANTHROPIC_API_KEY) return res.status(503).json({ error: 'Anthropic API key not configured on server' });
+  const { model, messages, system, max_tokens, tools } = req.body;
+  if (!model || !messages) return res.status(400).json({ error: 'model and messages are required' });
+  try {
+    const payload = { model, messages, max_tokens: max_tokens || 4096 };
+    if (system)  payload.system = system;
+    if (tools)   payload.tools  = tools;
+    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await anthropicRes.json();
+    if (!anthropicRes.ok) return res.status(anthropicRes.status).json({ error: data.error?.message || 'Anthropic request failed' });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: 'Anthropic proxy error: ' + e.message });
+  }
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
