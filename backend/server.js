@@ -21,6 +21,7 @@ const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'ByteChief2026@@';
 const ADMIN_EMAIL_ENV = process.env.ADMIN_EMAIL || 'admin@bytechief.ai';
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+const GROQ_API_KEY  = process.env.GROQ_API_KEY || '';
 
 app.set('trust proxy', 1);
 
@@ -242,6 +243,31 @@ app.post('/api/chat', authMw, chatLimit, async (req, res) => {
     }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: 'Log failed' }); }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GROQ PROXY ROUTE
+// ══════════════════════════════════════════════════════════════════════════════
+
+app.post('/api/groq', authMw, chatLimit, async (req, res) => {
+  if (!GROQ_API_KEY) return res.status(503).json({ error: 'Groq API key not configured on server' });
+  const { model, messages, max_tokens } = req.body;
+  if (!model || !messages) return res.status(400).json({ error: 'model and messages are required' });
+  try {
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer ' + GROQ_API_KEY,
+      },
+      body: JSON.stringify({ model, messages, max_tokens: max_tokens || 4096 }),
+    });
+    const data = await groqRes.json();
+    if (!groqRes.ok) return res.status(groqRes.status).json({ error: data.error?.message || 'Groq request failed' });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: 'Groq proxy error: ' + e.message });
+  }
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
